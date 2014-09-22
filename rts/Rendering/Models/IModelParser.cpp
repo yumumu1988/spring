@@ -41,6 +41,7 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	whitelist.insert("dae"  ); // Collada
 	whitelist.insert("lwo"  ); // LightWave
 	whitelist.insert("blend"); // Blender
+	whitelist.insert("fbx"); // Filmbox/Autodesk, TODO: enabled for testing of smoth, permanently disable/enable after feedback
 
 	Assimp::Importer importer;
 	// get a ";" separated list of format extensions ("*.3ds;*.lwo;*.mesh.xml;...")
@@ -202,6 +203,10 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 
 	// not found in cache, create the model and cache it
 	const std::string& fileExt = StringToLower(FileSystem::GetExtension(modelPath));
+
+	if (fileExt == "fbx") {
+		LOG_L(L_WARNING, "fbx format is only enabled for testing, don't use it (yet)!");
+	}
 
 	if ((fi = formats.find(fileExt)) != formats.end()) {
 		IModelParser* p = parsers[fi->second];
