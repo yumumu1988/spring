@@ -54,6 +54,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace Assimp;
 
+static const aiImporterDesc desc = {
+	"AC3D Importer",
+	"",
+	"",
+	"",
+	aiImporterFlags_SupportTextFlavour,
+	0,
+	0,
+	0,
+	0,
+	"ac acc ac3d"
+};
 
 // ------------------------------------------------------------------------------------------------
 // skip to the next token
@@ -65,7 +77,7 @@ using namespace Assimp;
 	} 
 
 // ------------------------------------------------------------------------------------------------
-// read a string (may be enclosed in double quotation marks). buffer must point to "
+// read a string (may be enclosed in float quotation marks). buffer must point to "
 #define AI_AC_GET_STRING(out) \
 	++buffer; \
 	const char* sz = buffer; \
@@ -100,7 +112,7 @@ using namespace Assimp;
 	for (unsigned int i = 0; i < num;++i) \
 	{ \
 		AI_AC_SKIP_TO_NEXT_TOKEN(); \
-		buffer = fast_atoreal_move<float>(buffer,((float*)out)[i]); \
+		buffer = fast_atoreal_move(buffer,((float*)out)[i]); \
 	}
 
 
@@ -136,12 +148,10 @@ bool AC3DImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool
 }
 
 // ------------------------------------------------------------------------------------------------
-// Get list of file extensions handled by this loader
-void AC3DImporter::GetExtensionList(std::set<std::string>& extensions)
+// Loader meta information
+const aiImporterDesc* AC3DImporter::GetInfo () const
 {
-	extensions.insert("ac");
-	extensions.insert("acc");
-	extensions.insert("ac3d");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------

@@ -98,7 +98,7 @@ public:
 	inline const aiVector3D& GetCurTargetPosition() const
 		{return curTargetPosition;}
 
-	inline double GetCurTime() const
+	inline float GetCurTime() const
 		{return curTime;}
 
 private:
@@ -109,7 +109,7 @@ private:
 	//! Represents the current position of the iterator
 	aiVector3D curPosition, curTargetPosition;
 
-	double curTime;
+	float curTime;
 
 	//! Input tracks and the next key to process
 	const std::vector<aiVectorKey>* objPos,*targetObjPos;

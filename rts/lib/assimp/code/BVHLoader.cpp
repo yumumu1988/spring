@@ -49,9 +49,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace Assimp;
 
+static const aiImporterDesc desc = {
+	"BVH Importer (MoCap)",
+	"",
+	"",
+	"",
+	aiImporterFlags_SupportTextFlavour,
+	0,
+	0,
+	0,
+	0,
+	"bvh"
+};
+
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 BVHLoader::BVHLoader()
+: noSkeletonMesh()
 {}
 
 // ------------------------------------------------------------------------------------------------
@@ -77,6 +91,19 @@ bool BVHLoader::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool cs
 }
 
 // ------------------------------------------------------------------------------------------------
+void BVHLoader::SetupProperties(const Importer* pImp)
+{
+	noSkeletonMesh = pImp->GetPropertyInteger(AI_CONFIG_IMPORT_NO_SKELETON_MESHES,0) != 0;
+}
+
+// ------------------------------------------------------------------------------------------------
+// Loader meta information
+const aiImporterDesc* BVHLoader::GetInfo () const
+{
+	return &desc;
+}
+
+// ------------------------------------------------------------------------------------------------
 // Imports the given file into the given scene structure. 
 void BVHLoader::InternReadFile( const std::string& pFile, aiScene* pScene, IOSystem* pIOHandler)
 {
@@ -99,8 +126,10 @@ void BVHLoader::InternReadFile( const std::string& pFile, aiScene* pScene, IOSys
 	mLine = 1;
 	ReadStructure( pScene);
 
-	// build a dummy mesh for the skeleton so that we see something at least
-	SkeletonMeshBuilder meshBuilder( pScene);
+	if (!noSkeletonMesh) {
+		// build a dummy mesh for the skeleton so that we see something at least
+		SkeletonMeshBuilder meshBuilder( pScene);
+	}
 
 	// construct an animation from all the motion data we read
 	CreateAnimation( pScene);
@@ -374,7 +403,7 @@ float BVHLoader::GetNextTokenAsFloat()
 	// check if the float is valid by testing if the atof() function consumed every char of the token
 	const char* ctoken = token.c_str();
 	float result = 0.0f;
-	ctoken = fast_atoreal_move<float>( ctoken, result);
+	ctoken = fast_atoreal_move( ctoken, result);
 
 	if( ctoken != token.c_str() + token.length())
 		ThrowException( boost::str( boost::format( "Expected a floating point number, but found \"%s\".") % token));
@@ -401,8 +430,8 @@ void BVHLoader::CreateAnimation( aiScene* pScene)
 
 	// put down the basic parameters
 	anim->mName.Set( "Motion");
-	anim->mTicksPerSecond = 1.0 / double( mAnimTickDuration);
-	anim->mDuration = double( mAnimNumFrames - 1);
+	anim->mTicksPerSecond = 1.0 / float( mAnimTickDuration);
+	anim->mDuration = float( mAnimNumFrames - 1);
 
 	// now generate the tracks for all nodes
 	anim->mNumChannels = mNodes.size();
@@ -428,7 +457,7 @@ void BVHLoader::CreateAnimation( aiScene* pScene)
 			aiVectorKey* poskey = nodeAnim->mPositionKeys;
 			for( unsigned int fr = 0; fr < mAnimNumFrames; ++fr)
 			{
-				poskey->mTime = double( fr);
+				poskey->mTime = float( fr);
 
 				// Now compute all translations in the right order
 				for( unsigned int channel = 0; channel < 3; ++channel)
@@ -486,7 +515,7 @@ void BVHLoader::CreateAnimation( aiScene* pScene)
 					}
 				}
 
-				rotkey->mTime = double( fr);
+				rotkey->mTime = float( fr);
 				rotkey->mValue = aiQuaternion( rotMatrix);
 				++rotkey;
 			}

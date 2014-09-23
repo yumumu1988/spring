@@ -147,7 +147,7 @@ struct Bone
 
 			//! Current time. may be negative, this
 			//! will be fixed later
-			double dTime;
+			float dTime;
 		};
 
 		//! Index of the key with the smallest time value
@@ -197,10 +197,10 @@ protected:
 
 
 	// -------------------------------------------------------------------
-	/** Called by Importer::GetExtensionList() for each loaded importer.
-	 * See BaseImporter::GetExtensionList() for details
+	/** Return importer meta information.
+	 * See #BaseImporter::GetInfo for the details
 	 */
-	void GetExtensionList(std::set<std::string>& extensions);
+	const aiImporterDesc* GetInfo () const;
 
 	// -------------------------------------------------------------------
 	/** Imports the given file into the given scene structure. 
@@ -399,7 +399,7 @@ private:
 
 	/** Length of the whole animation, in frames
 	 */
-	double dLengthOfAnim;
+	float dLengthOfAnim;
 
 	/** Do we have texture coordinates?
 	 */

@@ -136,6 +136,9 @@ XFileParser::XFileParser( const std::vector<char>& pBuffer)
 		ThrowException( boost::str( boost::format( "Unknown float size %1% specified in xfile header.")
 			% mBinaryFloatSize));
 
+	// The x format specifies size in bits, but we work in bytes
+	mBinaryFloatSize /= 8;
+
 	P += 16;
 
 	// If this is a compressed X file, apply the inflate algorithm to it
@@ -460,7 +463,7 @@ void XFileParser::ParseDataObjectMesh( Mesh* pMesh)
 		Face& face = pMesh->mPosFaces[a];
 		for( unsigned int b = 0; b < numIndices; b++)
 			face.mIndices.push_back( ReadInt());
-		CheckForSeparator();
+		TestForSeparator();
 	}
 
 	// here, other data objects may follow
@@ -583,7 +586,7 @@ void XFileParser::ParseDataObjectMeshNormals( Mesh* pMesh)
 		for( unsigned int b = 0; b < numIndices; b++)
 			face.mIndices.push_back( ReadInt());
 
-		CheckForSeparator();
+		TestForSeparator();
 	}
 
 	CheckForClosingBrace();
@@ -860,7 +863,7 @@ void XFileParser::ParseDataObjectAnimationKey( AnimBone* pAnimBone)
 					ThrowException( "Invalid number of arguments for quaternion key in animation");
 
 				aiQuatKey key;
-				key.mTime = double( time);
+				key.mTime = float( time);
 				key.mValue.w = ReadFloat();
 				key.mValue.x = ReadFloat();
 				key.mValue.y = ReadFloat();
@@ -879,7 +882,7 @@ void XFileParser::ParseDataObjectAnimationKey( AnimBone* pAnimBone)
 					ThrowException( "Invalid number of arguments for vector key in animation");
 
 				aiVectorKey key;
-				key.mTime = double( time);
+				key.mTime = float( time);
 				key.mValue = ReadVector3();
 
 				if( keyType == 2)
@@ -899,7 +902,7 @@ void XFileParser::ParseDataObjectAnimationKey( AnimBone* pAnimBone)
 
 				// read matrix
 				MatrixKey key;
-				key.mTime = double( time);
+				key.mTime = float( time);
 				key.mMatrix.a1 = ReadFloat(); key.mMatrix.b1 = ReadFloat();
 				key.mMatrix.c1 = ReadFloat(); key.mMatrix.d1 = ReadFloat();
 				key.mMatrix.a2 = ReadFloat(); key.mMatrix.b2 = ReadFloat();
@@ -939,7 +942,7 @@ void XFileParser::ParseDataObjectTextureFilename( std::string& pName)
 		DefaultLogger::get()->warn("Length of texture file name is zero. Skipping this texture.");
 	}
 
-	// some exporters write double backslash paths out. We simply replace them if we find them
+	// some exporters write float backslash paths out. We simply replace them if we find them
 	while( pName.find( "\\\\") != std::string::npos)
 		pName.replace( pName.find( "\\\\"), 2, "\\");
 }
@@ -1240,7 +1243,7 @@ void XFileParser::ReadUntilEndOfLine()
 // ------------------------------------------------------------------------------------------------
 unsigned short XFileParser::ReadBinWord()
 {
-	assert(End - P >= 2);
+	ai_assert(End - P >= 2);
 	const unsigned char* q = (const unsigned char*) P;
 	unsigned short tmp = q[0] | (q[1] << 8);
 	P += 2;
@@ -1250,7 +1253,7 @@ unsigned short XFileParser::ReadBinWord()
 // ------------------------------------------------------------------------------------------------
 unsigned int XFileParser::ReadBinDWord()
 {
-	assert(End - P >= 4);
+	ai_assert(End - P >= 4);
 	const unsigned char* q = (const unsigned char*) P;
 	unsigned int tmp = q[0] | (q[1] << 8) | (q[2] << 16) | (q[3] << 24);
 	P += 4;
@@ -1329,7 +1332,7 @@ float XFileParser::ReadFloat()
 		if( mBinaryFloatSize == 8)
 		{
 			if( End - P >= 8) {
-				float result = (float) (*(double*) P);
+				float result = (float) (*(float*) P);
 				P += 8;
 				return result;
 			} else {
@@ -1368,7 +1371,7 @@ float XFileParser::ReadFloat()
 	}
 
 	float result = 0.0f;
-	P = fast_atoreal_move<float>( P, result);
+	P = fast_atoreal_move( P, result);
 
 	CheckForSeparator();
 

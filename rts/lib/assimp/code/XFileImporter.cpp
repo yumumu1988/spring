@@ -51,6 +51,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace Assimp;
 
+static const aiImporterDesc desc = {
+	"Direct3D XFile Importer",
+	"",
+	"",
+	"",
+	aiImporterFlags_SupportTextFlavour | aiImporterFlags_SupportBinaryFlavour | aiImporterFlags_SupportCompressedFlavour,
+	1,
+	3,
+	1,
+	5,
+	"x" 
+};
+
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 XFileImporter::XFileImporter()
@@ -78,9 +91,10 @@ bool XFileImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, boo
 }
 
 // ------------------------------------------------------------------------------------------------
-void XFileImporter::GetExtensionList(std::set<std::string>& extensions)
+// Get file extension list
+const aiImporterDesc* XFileImporter::GetInfo () const
 {
-	extensions.insert("x");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -95,10 +109,6 @@ void XFileImporter::InternReadFile( const std::string& pFile, aiScene* pScene, I
 	size_t fileSize = file->FileSize();
 	if( fileSize < 16)
 		throw DeadlyImportError( "XFile is too small.");
-
-	// need to clear members - this method might be called multiple
-	// times on a single XFileImporter instance.
-	mImportedMats.clear();
 
 	// in the hope that binary files will never start with a BOM ...
 	mBuffer.resize( fileSize + 1);
@@ -118,7 +128,7 @@ void XFileImporter::InternReadFile( const std::string& pFile, aiScene* pScene, I
 
 // ------------------------------------------------------------------------------------------------
 // Constructs the return data structure out of the imported data.
-void XFileImporter::CreateDataRepresentationFromImport( aiScene* pScene, const XFile::Scene* pData)
+void XFileImporter::CreateDataRepresentationFromImport( aiScene* pScene, XFile::Scene* pData)
 {
 	// Read the global materials first so that meshes referring to them can find them later
 	ConvertMaterials( pScene, pData->mGlobalMaterials);
@@ -219,8 +229,8 @@ void XFileImporter::CreateMeshes( aiScene* pScene, aiNode* pNode, const std::vec
 	std::vector<aiMesh*> meshes;
 	for( unsigned int a = 0; a < pMeshes.size(); a++)
 	{
-		const XFile::Mesh* sourceMesh = pMeshes[a];
-		// first convert its materials so that we can find them when searching by name afterwards
+		XFile::Mesh* sourceMesh = pMeshes[a];
+		// first convert its materials so that we can find them with their index afterwards
 		ConvertMaterials( pScene, sourceMesh->mMaterials);
 
 		unsigned int numMaterials = std::max( (unsigned int)sourceMesh->mMaterials.size(), 1u);
@@ -258,15 +268,11 @@ void XFileImporter::CreateMeshes( aiScene* pScene, aiNode* pNode, const std::vec
 			aiMesh* mesh = new aiMesh;
 			meshes.push_back( mesh);
 
-			// find the material by name in the scene's material list. Either own material
-			// or referenced material, it should already be found there
+			// find the material in the scene's material list. Either own material
+			// or referenced material, it should already have a valid index
 			if( sourceMesh->mFaceMaterials.size() > 0)
 			{
-				std::map<std::string, unsigned int>::const_iterator matIt = mImportedMats.find( sourceMesh->mMaterials[b].mName);
-				if( matIt == mImportedMats.end())
-					mesh->mMaterialIndex = 0;
-				else
-					mesh->mMaterialIndex = matIt->second;
+        mesh->mMaterialIndex = sourceMesh->mMaterials[b].sceneIndex;
 			} else
 			{
 				mesh->mMaterialIndex = 0;
@@ -341,7 +347,7 @@ void XFileImporter::CreateMeshes( aiScene* pScene, aiNode* pNode, const std::vec
 			}
 
 			// there should be as much new vertices as we calculated before
-			assert( newIndex == numVertices);
+			ai_assert( newIndex == numVertices);
 
 			// convert all bones of the source mesh which influence vertices in this newly created mesh
 			const std::vector<XFile::Bone>& bones = sourceMesh->mBones;
@@ -456,7 +462,7 @@ void XFileImporter::CreateAnimations( aiScene* pScene, const XFile::Scene* pData
 				for( unsigned int c = 0; c < bone->mTrafoKeys.size(); c++)
 				{
 					// deconstruct each matrix into separate position, rotation and scaling
-					double time = bone->mTrafoKeys[c].mTime;
+					float time = bone->mTrafoKeys[c].mTime;
 					aiMatrix4x4 trafo = bone->mTrafoKeys[c].mMatrix;
 
 					// extract position
@@ -540,32 +546,52 @@ void XFileImporter::CreateAnimations( aiScene* pScene, const XFile::Scene* pData
 
 // ------------------------------------------------------------------------------------------------
 // Converts all materials in the given array and stores them in the scene's material list.
-void XFileImporter::ConvertMaterials( aiScene* pScene, const std::vector<XFile::Material>& pMaterials)
+void XFileImporter::ConvertMaterials( aiScene* pScene, std::vector<XFile::Material>& pMaterials)
 {
 	// count the non-referrer materials in the array
-	unsigned int numMaterials = 0;
+	unsigned int numNewMaterials = 0;
 	for( unsigned int a = 0; a < pMaterials.size(); a++)
 		if( !pMaterials[a].mIsReference)
-			numMaterials++;
-
-	if( numMaterials == 0)
-		return;
+			numNewMaterials++;
 
 	// resize the scene's material list to offer enough space for the new materials
-	aiMaterial** prevMats = pScene->mMaterials;
-	pScene->mMaterials = new aiMaterial*[pScene->mNumMaterials + numMaterials];
-	if( prevMats)
-	{
-		memcpy( pScene->mMaterials, prevMats, pScene->mNumMaterials * sizeof( aiMaterial*));
-		delete [] prevMats;
-	}
+  if( numNewMaterials > 0 )
+  {
+	  aiMaterial** prevMats = pScene->mMaterials;
+	  pScene->mMaterials = new aiMaterial*[pScene->mNumMaterials + numNewMaterials];
+	  if( prevMats)
+	  {
+		  memcpy( pScene->mMaterials, prevMats, pScene->mNumMaterials * sizeof( aiMaterial*));
+		  delete [] prevMats;
+	  }
+  }
 
 	// convert all the materials given in the array
 	for( unsigned int a = 0; a < pMaterials.size(); a++)
 	{
-		const XFile::Material& oldMat = pMaterials[a];
+		XFile::Material& oldMat = pMaterials[a];
 		if( oldMat.mIsReference)
-			continue;
+    {
+      // find the material it refers to by name, and store its index
+      for( size_t a = 0; a < pScene->mNumMaterials; ++a )
+      {
+        aiString name;
+        pScene->mMaterials[a]->Get( AI_MATKEY_NAME, name);
+        if( strcmp( name.C_Str(), oldMat.mName.data()) == 0 )
+        {
+          oldMat.sceneIndex = a;
+          break;
+        }
+      }
+
+      if( oldMat.sceneIndex == SIZE_MAX )
+      {
+        DefaultLogger::get()->warn( boost::str( boost::format( "Could not resolve global material reference \"%s\"") % oldMat.mName));
+        oldMat.sceneIndex = 0;
+      }
+
+      continue;
+    }
 
 		aiMaterial* mat = new aiMaterial;
 		aiString name;
@@ -580,8 +606,9 @@ void XFileImporter::ConvertMaterials( aiScene* pScene, const std::vector<XFile::
 
 		mat->AddProperty<int>( &shadeMode, 1, AI_MATKEY_SHADING_MODEL);
 		// material colours
-		// FIX: Setup this as ambient not as emissive color
-		mat->AddProperty( &oldMat.mEmissive, 1, AI_MATKEY_COLOR_AMBIENT);
+    // Unclear: there's no ambient colour, but emissive. What to put for ambient?
+    // Probably nothing at all, let the user select a suitable default.
+		mat->AddProperty( &oldMat.mEmissive, 1, AI_MATKEY_COLOR_EMISSIVE);
 		mat->AddProperty( &oldMat.mDiffuse, 1, AI_MATKEY_COLOR_DIFFUSE);
 		mat->AddProperty( &oldMat.mSpecular, 1, AI_MATKEY_COLOR_SPECULAR);
 		mat->AddProperty( &oldMat.mSpecularExponent, 1, AI_MATKEY_SHININESS);
@@ -663,7 +690,7 @@ void XFileImporter::ConvertMaterials( aiScene* pScene, const std::vector<XFile::
 		}
 
 		pScene->mMaterials[pScene->mNumMaterials] = mat;
-		mImportedMats[oldMat.mName] = pScene->mNumMaterials;
+		oldMat.sceneIndex = pScene->mNumMaterials;
 		pScene->mNumMaterials++;
 	}
 }

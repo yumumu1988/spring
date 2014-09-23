@@ -89,10 +89,12 @@ public:
 	bool CanRead( const std::string& pFile, IOSystem* pIOHandler, bool checkSig) const;
 
 protected:
-	/** Called by Importer::GetExtensionList() for each loaded importer.
-	 * See BaseImporter::GetExtensionList() for details
+	/** Return importer meta information.
+	 * See #BaseImporter::GetInfo for the details
 	 */
-	void GetExtensionList( std::set<std::string>& extensions);
+	const aiImporterDesc* GetInfo () const;
+
+	void SetupProperties(const Importer* pImp);
 
 	/** Imports the given file into the given scene structure. 
 	 * See BaseImporter::InternReadFile() for details
@@ -201,7 +203,7 @@ protected:
 	const Collada::Node* FindNodeBySID( const Collada::Node* pNode, const std::string& pSID) const;
 
 	/** Finds a proper name for a node derived from the collada-node's properties */
-	std::string FindNameForNode( const Collada::Node* pNode) const;
+	std::string FindNameForNode( const Collada::Node* pNode);
 
 protected:
 	/** Filename, for a verbose error message */
@@ -230,6 +232,12 @@ protected:
 
 	/** Accumulated animations for the target scene */
 	std::vector<aiAnimation*> mAnims;
+
+	bool noSkeletonMesh;
+	bool ignoreUpDirection;
+
+	/** Used by FindNameForNode() to generate unique node names */
+	unsigned int mNodeNameCounter;
 };
 
 } // end of namespace Assimp

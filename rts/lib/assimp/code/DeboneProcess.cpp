@@ -111,8 +111,8 @@ void DeboneProcess::Execute( aiScene* pScene)
 
 	if(numSplits)	{
 		// we need to do something. Let's go.
-		mSubMeshIndices.clear();
-		mSubMeshIndices.resize(pScene->mNumMeshes);
+		//mSubMeshIndices.clear();                  // really needed?
+		mSubMeshIndices.resize(pScene->mNumMeshes); // because we're doing it here anyway
 
 		// build a new array of meshes for the scene
 		std::vector<aiMesh*> meshes;
@@ -204,9 +204,9 @@ bool DeboneProcess::ConsiderMesh(const aiMesh* pMesh)
 			if(w>=mThreshold)	{
 
 				if(vertexBones[vid]!=cUnowned)	{
-					if(vertexBones[vid]==i) //double entry
+					if(vertexBones[vid]==i) //float entry
 					{
-						DefaultLogger::get()->warn("Encountered double entry in bone weights");					
+						DefaultLogger::get()->warn("Encountered float entry in bone weights");					
 					}
 					else //TODO: track attraction in order to break tie
 					{
@@ -276,9 +276,9 @@ void DeboneProcess::SplitMesh( const aiMesh* pMesh, std::vector< std::pair< aiMe
 
 			if(w>=mThreshold) {
 				if(vertexBones[vid]!=cUnowned)  {
-					if(vertexBones[vid]==i) //double entry
+					if(vertexBones[vid]==i) //float entry
 					{
-						//DefaultLogger::get()->warn("Encountered double entry in bone weights");					
+						//DefaultLogger::get()->warn("Encountered float entry in bone weights");					
 					}
 					else //TODO: track attraction in order to break tie
 					{

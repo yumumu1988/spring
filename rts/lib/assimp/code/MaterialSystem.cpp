@@ -102,7 +102,7 @@ aiReturn aiGetMaterialFloatArray(const aiMaterial* pMat,
 	}
 
 	// data is given in floats, simply copy it
-	unsigned int iWrite;
+	unsigned int iWrite = 0;
 	if( aiPTI_Float == prop->mType || aiPTI_Buffer == prop->mType)	{
 		iWrite = prop->mDataLength / sizeof(float);
 		if (pMax) {
@@ -137,7 +137,7 @@ aiReturn aiGetMaterialFloatArray(const aiMaterial* pMat,
 		const char* cur =  prop->mData+4;
 		ai_assert(prop->mDataLength>=5 && !prop->mData[prop->mDataLength-1]);
 		for (unsigned int a = 0; ;++a) {	
-			cur = fast_atoreal_move<float>(cur,pOut[a]);
+			cur = fast_atoreal_move(cur,pOut[a]);
 			if(a==iWrite-1) {
 				break;
 			}
@@ -175,7 +175,7 @@ aiReturn aiGetMaterialIntegerArray(const aiMaterial* pMat,
 	}
 
 	// data is given in ints, simply copy it
-	unsigned int iWrite;
+	unsigned int iWrite = 0;
 	if( aiPTI_Integer == prop->mType || aiPTI_Buffer == prop->mType)	{
 		iWrite = prop->mDataLength / sizeof(int32_t);
 		if (pMax) {
@@ -245,6 +245,18 @@ aiReturn aiGetMaterialColor(const aiMaterial* pMat,
 	}
 
 	return eRet;
+}
+
+// ------------------------------------------------------------------------------------------------
+// Get a aiUVTransform (4 floats) from the material
+aiReturn aiGetMaterialUVTransform(const aiMaterial* pMat, 
+	const char* pKey,
+	unsigned int type,
+	unsigned int index,
+	aiUVTransform* pOut)
+{
+	unsigned int iMax = 4;
+	return  aiGetMaterialFloatArray(pMat,pKey,type,index,(float*)pOut,&iMax);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -458,7 +470,7 @@ aiReturn aiMaterial::AddBinaryProperty (const void* pInput,
 		return AI_SUCCESS;
 	}
 
-	// resize the array ... double the storage allocated
+	// resize the array ... float the storage allocated
 	if (mNumProperties == mNumAllocated)	{
 		const unsigned int iOld = mNumAllocated;
 		mNumAllocated *= 2;

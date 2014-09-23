@@ -75,10 +75,10 @@ public:
 protected:
 
 	// -------------------------------------------------------------------
-	/** Called by Importer::GetExtensionList() for each loaded importer.
-	 * See BaseImporter::GetExtensionList() for details
+	/** Return importer meta information.
+	 * See #BaseImporter::GetInfo for the details
 	 */
-	void GetExtensionList(std::set<std::string>& extensions);
+	const aiImporterDesc* GetInfo () const;
 
 
 	// -------------------------------------------------------------------
@@ -197,6 +197,7 @@ protected:
 	/** Config options: Recompute the normals in every case - WA
 	    for 3DS Max broken ASE normal export */
 	bool configRecomputeNormals;
+	bool noSkeletonMesh;
 };
 
 } // end of namespace Assimp

@@ -46,8 +46,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define AI_VECTOR3D_INL_INC
 
 #ifdef __cplusplus
-#include "System/FastMath.h"
 #include "vector3.h"
+#include "System/FastMath.h"
+#include "lib/streflop/streflop_cond.h"
 
 // ------------------------------------------------------------------------------------------------
 /** Transformation of a vector by a 3x3 matrix */
@@ -148,6 +149,19 @@ template <typename TReal>
 AI_FORCE_INLINE bool aiVector3t<TReal>::operator!= (const aiVector3t<TReal>& other) const {
 	return x != other.x || y != other.y || z != other.z;
 }
+// ---------------------------------------------------------------------------
+template<typename TReal>
+AI_FORCE_INLINE bool aiVector3t<TReal>::Equal(const aiVector3t<TReal>& other, TReal epsilon) const {
+	return
+		std::abs(x - other.x) <= epsilon &&
+		std::abs(y - other.y) <= epsilon &&
+		std::abs(z - other.z) <= epsilon;
+}
+// ------------------------------------------------------------------------------------------------
+template <typename TReal>
+AI_FORCE_INLINE bool aiVector3t<TReal>::operator < (const aiVector3t<TReal>& other) const {
+	return x != other.x ? x < other.x : y != other.y ? y < other.y : z < other.z;
+}
 // ------------------------------------------------------------------------------------------------
 template <typename TReal>
 AI_FORCE_INLINE const aiVector3t<TReal> aiVector3t<TReal>::SymMul(const aiVector3t<TReal>& o) {
@@ -208,6 +222,7 @@ AI_FORCE_INLINE  aiVector3t<TReal> operator - ( const aiVector3t<TReal>& v)	{
 	return aiVector3t<TReal>( -v.x, -v.y, -v.z);
 }
 
+// ------------------------------------------------------------------------------------------------
 
 #endif // __cplusplus
 #endif // AI_VECTOR3D_INL_INC

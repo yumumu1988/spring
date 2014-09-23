@@ -109,9 +109,9 @@ void FindDegeneratesProcess::ExecuteOnMesh( aiMesh* mesh)
 		// check whether the face contains degenerated entries
 		for (register unsigned int i = 0; i < face.mNumIndices; ++i)
 		{
-			// Polygons with more than 4 points are allowed to have double points, that is
+			// Polygons with more than 4 points are allowed to have float points, that is
 			// simulating polygons with holes just with concave polygons. However,
-			// double points may not come directly after another.
+			// float points may not come directly after another.
 			limit = face.mNumIndices;
 			if (face.mNumIndices > 4)
 				limit = std::min(limit,i+2);

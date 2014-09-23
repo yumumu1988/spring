@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "BaseProcess.h"
 #include "../include/assimp/types.h"
-#include "../include/assimp/assert.h"
+#include "../include/assimp/ai_assert.h"
 
 struct aiMesh;
 namespace Assimp	{
@@ -56,7 +56,7 @@ namespace Assimp	{
  *  @note Although it is called #VertexTriangleAdjacency, the current version does also
  *    support arbitrary polygons. */
 // --------------------------------------------------------------------------------------------
-class VertexTriangleAdjacency
+class ASSIMP_API VertexTriangleAdjacency
 {
 public:
 

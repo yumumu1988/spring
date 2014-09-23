@@ -45,10 +45,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *  http://geometrictools.com/Documentation/PlatonicSolids.pdf.
  */
 
-#include "lib/streflop/streflop_cond.h"
 #include "AssimpPCH.h"
 #include "StandardShapes.h"
-#include "System/FastMath.h"
 
 namespace Assimp	{
 
@@ -417,8 +415,8 @@ void StandardShapes::MakeCone(float height,float radius1,
 	const float angle_delta = (float)AI_MATH_TWO_PI / tess;
 	const float angle_max   = (float)AI_MATH_TWO_PI;
 
-	float s = 1.f; // cos(angle == 0);
-	float t = 0.f; // sin(angle == 0);
+	float s = 1.f; // math::cos(angle == 0);
+	float t = 0.f; // math::sin(angle == 0);
 
 	for (float angle = 0.f; angle < angle_max; )
 	{
@@ -486,8 +484,8 @@ void StandardShapes::MakeCircle(float radius, unsigned int tess,
 	const float angle_delta = (float)AI_MATH_TWO_PI / tess;
 	const float angle_max   = (float)AI_MATH_TWO_PI;
 
-	float s = 1.f; // cos(angle == 0);
-	float t = 0.f; // sin(angle == 0);
+	float s = 1.f; // math::cos(angle == 0);
+	float t = 0.f; // math::sin(angle == 0);
 
 	for (float angle = 0.f; angle < angle_max;  )
 	{

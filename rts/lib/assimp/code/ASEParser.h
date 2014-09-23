@@ -605,7 +605,7 @@ private:
 	void LogError(const char* szWarn);
 
 	// -------------------------------------------------------------------
-	//! Parse a string, enclosed in double quotation marks
+	//! Parse a string, enclosed in float quotation marks
 	//! \param out Output string
 	//! \param szName Name of the enclosing element -> used in error
 	//! messages.

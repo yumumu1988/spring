@@ -44,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "AssimpPCH.h"
+#ifndef ASSIMP_BUILD_NO_ASE_IMPORTER
 
 // internal headers
 #include "TextureTransform.h"
@@ -832,7 +833,7 @@ bool Parser::ParseString(std::string& out,const char* szName)
 	{
 
 		sprintf(szBuffer,"Unable to parse %s block: Strings are expected "
-			"to be enclosed in double quotation marks",szName);
+			"to be enclosed in float quotation marks",szName);
 		LogWarning(szBuffer);
 		return false;
 	}
@@ -844,7 +845,7 @@ bool Parser::ParseString(std::string& out,const char* szName)
 		else if ('\0' == *sz)
 		{			
 			sprintf(szBuffer,"Unable to parse %s block: Strings are expected to "
-				"be enclosed in double quotation marks but EOF was reached before "
+				"be enclosed in float quotation marks but EOF was reached before "
 				"a closing quotation mark was encountered",szName);
 			LogWarning(szBuffer);
 			return false;
@@ -1158,7 +1159,7 @@ void Parser::ParseLV3ScaleAnimationBlock(ASE::Animation& anim)
 				anim.akeyScaling.push_back(aiVectorKey());
 				aiVectorKey& key = anim.akeyScaling.back();
 				ParseLV4MeshFloatTriple(&key.mValue.x,iIndex);
-				key.mTime = (double)iIndex;
+				key.mTime = (float)iIndex;
 			}
 		}
 		AI_ASE_HANDLE_SECTION("3","*CONTROL_POS_TRACK");
@@ -1204,7 +1205,7 @@ void Parser::ParseLV3PosAnimationBlock(ASE::Animation& anim)
 				anim.akeyPositions.push_back(aiVectorKey());
 				aiVectorKey& key = anim.akeyPositions.back();
 				ParseLV4MeshFloatTriple(&key.mValue.x,iIndex);
-				key.mTime = (double)iIndex;
+				key.mTime = (float)iIndex;
 			}
 		}
 		AI_ASE_HANDLE_SECTION("3","*CONTROL_POS_TRACK");
@@ -1252,7 +1253,7 @@ void Parser::ParseLV3RotAnimationBlock(ASE::Animation& anim)
 				aiVector3D v;float f;
 				ParseLV4MeshFloatTriple(&v.x,iIndex);
 				ParseLV4MeshFloat(f);
-				key.mTime = (double)iIndex;
+				key.mTime = (float)iIndex;
 				key.mValue = aiQuaternion(v,f);
 			}
 		}
@@ -1566,8 +1567,8 @@ void Parser::ParseLV4MeshBones(unsigned int iNumBones,ASE::Mesh& mesh)
 					unsigned int iIndex = strtoul10(filePtr,&filePtr);
 					if (iIndex >= iNumBones)
 					{
-						continue;
 						LogWarning("Bone index is out of bounds");
+						continue;
 					}
 					if (!ParseString(mesh.mBones[iIndex].mName,"*MESH_BONE_NAME"))						
 						SkipToNextToken();
@@ -1614,7 +1615,7 @@ void Parser::ParseLV4MeshBonesVertices(unsigned int iNumVertices,ASE::Mesh& mesh
 
 					// then parse the vertex weight
 					if (!SkipSpaces(&filePtr))break;
-					filePtr = fast_atoreal_move<float>(filePtr,pairOut.second);
+					filePtr = fast_atoreal_move(filePtr,pairOut.second);
 
 					// -1 marks unused entries
 					if (-1 != pairOut.first)
@@ -2131,7 +2132,7 @@ void Parser::ParseLV4MeshFloat(float& fOut)
 		return;
 	}
 	// parse the first float
-	filePtr = fast_atoreal_move<float>(filePtr,fOut);
+	filePtr = fast_atoreal_move(filePtr,fOut);
 }
 // ------------------------------------------------------------------------------------------------
 void Parser::ParseLV4MeshLong(unsigned int& iOut)
@@ -2148,3 +2149,5 @@ void Parser::ParseLV4MeshLong(unsigned int& iOut)
 	// parse the value
 	iOut = strtoul10(filePtr,&filePtr);
 }
+
+#endif // !! ASSIMP_BUILD_NO_BASE_IMPORTER

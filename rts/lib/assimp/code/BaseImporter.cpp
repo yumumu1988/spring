@@ -106,6 +106,29 @@ void BaseImporter::SetupProperties(const Importer* /*pImp*/)
 }
 
 // ------------------------------------------------------------------------------------------------
+void BaseImporter::GetExtensionList(std::set<std::string>& extensions)
+{
+	const aiImporterDesc* desc = GetInfo();
+	ai_assert(desc != NULL);
+
+	const char* ext = desc->mFileExtensions;
+	ai_assert(ext != NULL);
+
+	const char* last = ext;
+	do {
+		if (!*ext || *ext == ' ') {
+			extensions.insert(std::string(last,ext-last));
+			ai_assert(ext-last > 0);
+			last = ext;
+			while(*last == ' ') {
+				++last;
+			}
+		}
+	}
+	while(*ext++);
+}
+
+// ------------------------------------------------------------------------------------------------
 /*static*/ bool BaseImporter::SearchFileHeaderForToken(IOSystem* pIOHandler,
 	const std::string&	pFile,
 	const char**		tokens, 
@@ -357,6 +380,43 @@ void BaseImporter::ConvertToUTF8(std::vector<char>& data)
 }
 
 // ------------------------------------------------------------------------------------------------
+// Convert to UTF8 data to ISO-8859-1
+void BaseImporter::ConvertUTF8toISO8859_1(std::string& data)
+{
+	unsigned int size = data.size();
+	unsigned int i = 0, j = 0;
+
+	while(i < size) {
+		if((unsigned char) data[i] < 0x80) {
+			data[j] = data[i];
+		} else if(i < size - 1) {
+			if((unsigned char) data[i] == 0xC2) {
+				data[j] = data[++i];
+			} else if((unsigned char) data[i] == 0xC3) {
+				data[j] = ((unsigned char) data[++i] + 0x40);
+			} else {
+				std::stringstream stream;
+
+				stream << "UTF8 code " << std::hex << data[i] << data[i + 1] << " can not be converted into ISA-8859-1.";
+
+				DefaultLogger::get()->error(stream.str());
+
+				data[j++] = data[i++];
+				data[j] = data[i];
+			}
+		} else {
+			DefaultLogger::get()->error("UTF8 code but only one character remaining");
+
+			data[j] = data[i];
+		}
+
+		i++; j++;
+	}
+
+	data.resize(j);
+}
+
+// ------------------------------------------------------------------------------------------------
 void BaseImporter::TextFileToBuffer(IOStream* stream,
 	std::vector<char>& data)
 {
@@ -510,7 +570,7 @@ void BatchLoader::LoadAll()
 	for (std::list<LoadRequest>::iterator it = data->requests.begin();it != data->requests.end(); ++it)	{
 		// force validation in debug builds
 		unsigned int pp = (*it).flags;
-#ifdef _DEBUG
+#ifdef ASSIMP_BUILD_DEBUG
 		pp |= aiProcess_ValidateDataStructure;
 #endif
 		// setup config properties if necessary
@@ -518,6 +578,7 @@ void BatchLoader::LoadAll()
 		pimpl->mFloatProperties  = (*it).map.floats;
 		pimpl->mIntProperties    = (*it).map.ints;
 		pimpl->mStringProperties = (*it).map.strings;
+		pimpl->mMatrixProperties = (*it).map.matrices;
 
 		if (!DefaultLogger::isNullLogger())
 		{

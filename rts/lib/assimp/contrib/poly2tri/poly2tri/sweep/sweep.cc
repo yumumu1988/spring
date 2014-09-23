@@ -230,7 +230,7 @@ void Sweep::FillAdvancingFront(SweepContext& tcx, Node& n)
   Node* node = n.next;
 
   while (node->next) {
-    double angle = HoleAngle(*node);
+    float angle = HoleAngle(*node);
     if (angle > M_PI_2 || angle < -M_PI_2) break;
     Fill(tcx, *node);
     node = node->next;
@@ -240,7 +240,7 @@ void Sweep::FillAdvancingFront(SweepContext& tcx, Node& n)
   node = n.prev;
 
   while (node->prev) {
-    double angle = HoleAngle(*node);
+    float angle = HoleAngle(*node);
     if (angle > M_PI_2 || angle < -M_PI_2) break;
     Fill(tcx, *node);
     node = node->prev;
@@ -248,7 +248,7 @@ void Sweep::FillAdvancingFront(SweepContext& tcx, Node& n)
 
   // Fill right basins
   if (n.next && n.next->next) {
-    double angle = BasinAngle(n);
+    float angle = BasinAngle(n);
     if (angle < PI_3div4) {
       FillBasin(tcx, n);
     }
@@ -342,36 +342,36 @@ bool Sweep::Legalize(SweepContext& tcx, Triangle& t)
 
 bool Sweep::Incircle(Point& pa, Point& pb, Point& pc, Point& pd)
 {
-  double adx = pa.x - pd.x;
-  double ady = pa.y - pd.y;
-  double bdx = pb.x - pd.x;
-  double bdy = pb.y - pd.y;
+  float adx = pa.x - pd.x;
+  float ady = pa.y - pd.y;
+  float bdx = pb.x - pd.x;
+  float bdy = pb.y - pd.y;
 
-  double adxbdy = adx * bdy;
-  double bdxady = bdx * ady;
-  double oabd = adxbdy - bdxady;
+  float adxbdy = adx * bdy;
+  float bdxady = bdx * ady;
+  float oabd = adxbdy - bdxady;
 
   if (oabd <= 0)
     return false;
 
-  double cdx = pc.x - pd.x;
-  double cdy = pc.y - pd.y;
+  float cdx = pc.x - pd.x;
+  float cdy = pc.y - pd.y;
 
-  double cdxady = cdx * ady;
-  double adxcdy = adx * cdy;
-  double ocad = cdxady - adxcdy;
+  float cdxady = cdx * ady;
+  float adxcdy = adx * cdy;
+  float ocad = cdxady - adxcdy;
 
   if (ocad <= 0)
     return false;
 
-  double bdxcdy = bdx * cdy;
-  double cdxbdy = cdx * bdy;
+  float bdxcdy = bdx * cdy;
+  float cdxbdy = cdx * bdy;
 
-  double alift = adx * adx + ady * ady;
-  double blift = bdx * bdx + bdy * bdy;
-  double clift = cdx * cdx + cdy * cdy;
+  float alift = adx * adx + ady * ady;
+  float blift = bdx * bdx + bdy * bdy;
+  float clift = cdx * cdx + cdy * cdy;
 
-  double det = alift * (bdxcdy - cdxbdy) + blift * ocad + clift * oabd;
+  float det = alift * (bdxcdy - cdxbdy) + blift * ocad + clift * oabd;
 
   return det > 0;
 }
@@ -497,7 +497,7 @@ void Sweep::FillBasinReq(SweepContext& tcx, Node* node)
 
 bool Sweep::IsShallow(SweepContext& tcx, Node& node)
 {
-  double height;
+  float height;
 
   if (tcx.basin.left_highest) {
     height = tcx.basin.left_node->point->y - node.point->y;
@@ -754,7 +754,7 @@ void Sweep::FlipScanEdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle&
 Sweep::~Sweep() {
 
     // Clean up memory
-    for(int i = 0; i < nodes_.size(); i++) {
+    for(unsigned int i = 0; i < nodes_.size(); i++) {
         delete nodes_[i];
     }
 

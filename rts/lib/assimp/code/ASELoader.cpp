@@ -58,9 +58,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace Assimp;
 using namespace Assimp::ASE;
 
+static const aiImporterDesc desc = {
+	"ASE Importer",
+	"",
+	"",
+	"Similar to 3DS but text-encoded",
+	aiImporterFlags_SupportTextFlavour,
+	0,
+	0,
+	0,
+	0,
+	"ase ask" 
+};
+
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 ASEImporter::ASEImporter()
+: noSkeletonMesh()
 {}
 
 // ------------------------------------------------------------------------------------------------
@@ -86,10 +100,10 @@ bool ASEImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 }
 
 // ------------------------------------------------------------------------------------------------
-void ASEImporter::GetExtensionList(std::set<std::string>& extensions)
+// Loader meta information
+const aiImporterDesc* ASEImporter::GetInfo () const
 {
-	extensions.insert("ase");
-	extensions.insert("ask");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -98,6 +112,8 @@ void ASEImporter::SetupProperties(const Importer* pImp)
 {
 	configRecomputeNormals = (pImp->GetPropertyInteger(
 		AI_CONFIG_IMPORT_ASE_RECONSTRUCT_NORMALS,1) ? true : false);
+
+	noSkeletonMesh = pImp->GetPropertyInteger(AI_CONFIG_IMPORT_NO_SKELETON_MESHES,0) != 0;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -231,7 +247,9 @@ void ASEImporter::InternReadFile( const std::string& pFile,
 	// ------------------------------------------------------------------
 	if (!pScene->mNumMeshes)	{
 		pScene->mFlags |= AI_SCENE_FLAGS_INCOMPLETE;
-		SkeletonMeshBuilder skeleton(pScene);
+		if (!noSkeletonMesh) {
+			SkeletonMeshBuilder skeleton(pScene);
+		}
 	}
 }
 // ------------------------------------------------------------------------------------------------

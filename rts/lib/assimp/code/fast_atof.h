@@ -7,7 +7,7 @@
 // Adapted to the ASSIMP library because the builtin atof indeed takes AGES to parse a
 // float inside a large string. Before parsing, it does a strlen on the given point.
 // Changes:
-//  22nd October 08 (Aramis_acg): Added temporary cast to double, added strtoul10_64
+//  22nd October 08 (Aramis_acg): Added temporary cast to float, added strtoul10_64
 //     to ensure long numbers are handled correctly
 // ------------------------------------------------------------------------------------
 
@@ -16,27 +16,30 @@
 #define __FAST_A_TO_F_H_INCLUDED__
 
 #include "lib/streflop/streflop_cond.h"
+#include <limits>
+
+#include "StringComparison.h"
 
 namespace Assimp
 {
 
 const float fast_atof_table[16] =	{  // we write [16] here instead of [] to work around a swig bug
-	0.f,
-	0.1f,
-	0.01f,
-	0.001f,
-	0.0001f,
-	0.00001f,
-	0.000001f,
-	0.0000001f,
-	0.00000001f,
-	0.000000001f,
-	0.0000000001f,
-	0.00000000001f,
-	0.000000000001f,
-	0.0000000000001f,
-	0.00000000000001f,
-	0.000000000000001f
+	0.0,
+	0.1,
+	0.01,
+	0.001,
+	0.0001,
+	0.00001,
+	0.000001,
+	0.0000001,
+	0.00000001,
+	0.000000001,
+	0.0000000001,
+	0.00000000001,
+	0.000000000001,
+	0.0000000000001,
+	0.00000000000001,
+	0.000000000000001
 };
 
 
@@ -178,6 +181,9 @@ inline uint64_t strtoul10_64( const char* in, const char** out=0, unsigned int* 
 	unsigned int cur = 0;
 	uint64_t value = 0;
 
+	if ( *in < '0' || *in > '9' )
+			throw std::invalid_argument(std::string("The string \"") + in + "\" cannot be converted into a value.");
+
 	bool running = true;
 	while ( running )
 	{
@@ -187,7 +193,7 @@ inline uint64_t strtoul10_64( const char* in, const char** out=0, unsigned int* 
 		const uint64_t new_value = ( value * 10 ) + ( *in - '0' );
 		
 		if (new_value < value) /* numeric overflow, we rely on you */
-			return value;
+			throw std::overflow_error(std::string("Converting the string \"") + in + "\" into a value resulted in overflow.");
 
 		value = new_value;
 
@@ -223,33 +229,70 @@ inline uint64_t strtoul10_64( const char* in, const char** out=0, unsigned int* 
 // If you find any bugs, please send them to me, niko (at) irrlicht3d.org.
 // ------------------------------------------------------------------------------------
 template <typename Real>
-inline const char* fast_atoreal_move( const char* c, Real& out)
+inline const char* fast_atoreal_move( const char* c, Real& out, bool check_comma = true)
 {
-	Real f;
+	Real f = 0;
 
-	bool inv = (*c=='-');
-	if (inv || *c=='+') {
+	bool inv = (*c == '-');
+	if (inv || *c == '+') {
 		++c;
 	}
 
-	f = static_cast<Real>( strtoul10_64 ( c, &c) );
-	if (*c == '.' || (c[0] == ',' && c[1] >= '0' && c[1] <= '9')) // allow for commas, too
+	if ((c[0] == 'N' || c[0] == 'n') && ASSIMP_strincmp(c, "nan", 3) == 0)
+	{
+		out = std::numeric_limits<Real>::quiet_NaN();
+		c += 3;
+		return c;
+	}
+
+	if ((c[0] == 'I' || c[0] == 'i') && ASSIMP_strincmp(c, "inf", 3) == 0)
+	{
+		out = std::numeric_limits<Real>::infinity();
+		if (inv) {
+			out = -out;
+		}
+		c += 3;
+		if ((c[0] == 'I' || c[0] == 'i') && ASSIMP_strincmp(c, "inity", 5) == 0)
+		{
+			c += 5;
+		}
+		return c;
+	}
+
+	if (!(c[0] >= '0' && c[0] <= '9') &&
+	    !(c[0] == '.' && c[1] >= '0' && c[1] <= '9'))
+	{
+		throw std::invalid_argument("Cannot parse string "
+		                            "as real number: does not start with digit "
+		                            "or decimal point followed by digit.");
+	}
+
+	if (*c != '.')
+	{
+		f = static_cast<Real>( strtoul10_64 ( c, &c) );
+	}
+
+	if ((*c == '.' || (check_comma && c[0] == ',')) && c[1] >= '0' && c[1] <= '9')
 	{
 		++c;
 
 		// NOTE: The original implementation is highly inaccurate here. The precision of a single
 		// IEEE 754 float is not high enough, everything behind the 6th digit tends to be more 
-		// inaccurate than it would need to be. Casting to double seems to solve the problem.
+		// inaccurate than it would need to be. Casting to float seems to solve the problem.
 		// strtol_64 is used to prevent integer overflow.
 
 		// Another fix: this tends to become 0 for long numbers if we don't limit the maximum 
 		// number of digits to be read. AI_FAST_ATOF_RELAVANT_DECIMALS can be a value between
 		// 1 and 15.
 		unsigned int diff = AI_FAST_ATOF_RELAVANT_DECIMALS;
-		double pl = static_cast<double>( strtoul10_64 ( c, &c, &diff ));
+		float pl = static_cast<float>( strtoul10_64 ( c, &c, &diff ));
 
 		pl *= fast_atof_table[diff];
 		f += static_cast<Real>( pl );
+	}
+	// For backwards compatibility: eat trailing dots, but not trailing commas.
+	else if (*c == '.') {
+		++c;
 	}
 
 	// A major 'E' must be allowed. Necessary for proper reading of some DXF files.
@@ -264,12 +307,12 @@ inline const char* fast_atoreal_move( const char* c, Real& out)
 
 		// The reason float constants are used here is that we've seen cases where compilers
 		// would perform such casts on compile-time constants at runtime, which would be
-		// bad considering how frequently fast_atoreal_move<float> is called in Assimp.
+		// bad considering how frequently fast_atoreal_move is called in Assimp.
 		Real exp = static_cast<Real>( strtoul10_64(c, &c) );
 		if (einv) {
 			exp = -exp;
 		}
-		f *= math::pow(static_cast<Real>(10.0f), exp);
+		f *= std::pow(static_cast<Real>(10.0), exp);
 	}
 
 	if (inv) {
@@ -292,7 +335,7 @@ inline float fast_atof(const char* c)
 inline float fast_atof( const char* c, const char** cout)
 {
 	float ret;
-	*cout = fast_atoreal_move<float>(c, ret);
+	*cout = fast_atoreal_move(c, ret);
 
 	return ret;
 }
@@ -300,7 +343,7 @@ inline float fast_atof( const char* c, const char** cout)
 inline float fast_atof( const char** inout)
 {
 	float ret;
-	*inout = fast_atoreal_move<float>(*inout, ret);
+	*inout = fast_atoreal_move(*inout, ret);
 
 	return ret;
 }
@@ -309,7 +352,7 @@ inline float fast_atof( const char** inout)
 inline float fast_atod(const char* c)
 {
 	float ret;
-	fast_atoreal_move<float>(c, ret);
+	fast_atoreal_move(c, ret);
 	return ret;
 }
 
@@ -317,7 +360,7 @@ inline float fast_atod(const char* c)
 inline float fast_atod( const char* c, const char** cout)
 {
 	float ret;
-	*cout = fast_atoreal_move<float>(c, ret);
+	*cout = fast_atoreal_move(c, ret);
 
 	return ret;
 }
@@ -325,7 +368,7 @@ inline float fast_atod( const char* c, const char** cout)
 inline float fast_atod( const char** inout)
 {
 	float ret;
-	*inout = fast_atoreal_move<float>(*inout, ret);
+	*inout = fast_atoreal_move(*inout, ret);
 
 	return ret;
 }

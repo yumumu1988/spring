@@ -87,7 +87,7 @@ PLY::EDataType PLY::Property::ParseDataType(const char* pCur,const char** pCurOu
 	{
 		eOut = PLY::EDT_Float;
 	}
-	else if (TokenMatch(pCur,"double64",8) || TokenMatch(pCur,"double",6) ||
+	else if (TokenMatch(pCur,"float64",8) || TokenMatch(pCur,"float",6) ||
 		     TokenMatch(pCur,"float64",7))
 	{
 		eOut = PLY::EDT_Double;
@@ -427,7 +427,7 @@ bool PLY::DOM::SkipComments (const char* pCur,
 }
 
 // ------------------------------------------------------------------------------------------------
-bool PLY::DOM::ParseHeader (const char* pCur,const char** pCurOut)
+bool PLY::DOM::ParseHeader (const char* pCur,const char** pCurOut,bool isBinary)
 {
 	ai_assert(NULL != pCur && NULL != pCurOut);
 	DefaultLogger::get()->debug("PLY::DOM::ParseHeader() begin");
@@ -458,7 +458,10 @@ bool PLY::DOM::ParseHeader (const char* pCur,const char** pCurOut)
 			SkipLine(&pCur);
 		}
 	}
-	SkipSpacesAndLineEnd(pCur,&pCur);
+	if(!isBinary)
+	{ // it would occur an error, if binary data start with values as space or line end.
+		SkipSpacesAndLineEnd(pCur,&pCur);
+	}
 	*pCurOut = pCur;
 
 	DefaultLogger::get()->debug("PLY::DOM::ParseHeader() succeeded");
@@ -527,7 +530,7 @@ bool PLY::DOM::ParseInstanceBinary (const char* pCur,DOM* p_pcOut,bool p_bBE)
 
 	DefaultLogger::get()->debug("PLY::DOM::ParseInstanceBinary() begin");
 
-	if(!p_pcOut->ParseHeader(pCur,&pCur))
+	if(!p_pcOut->ParseHeader(pCur,&pCur,true))
 	{
 		DefaultLogger::get()->debug("PLY::DOM::ParseInstanceBinary() failure");
 		return false;
@@ -550,7 +553,7 @@ bool PLY::DOM::ParseInstance (const char* pCur,DOM* p_pcOut)
 	DefaultLogger::get()->debug("PLY::DOM::ParseInstance() begin");
 
 
-	if(!p_pcOut->ParseHeader(pCur,&pCur))
+	if(!p_pcOut->ParseHeader(pCur,&pCur,false))
 	{
 		DefaultLogger::get()->debug("PLY::DOM::ParseInstance() failure");
 		return false;
@@ -811,14 +814,14 @@ bool PLY::PropertyInstance::ParseValue(
 
 	case EDT_Float:
 
-		pCur = fast_atoreal_move<float>(pCur,out->fFloat);
+		pCur = fast_atoreal_move(pCur,out->fFloat);
 		break;
 
 	case EDT_Double:
 
 		float f;
-		pCur = fast_atoreal_move<float>(pCur,f);
-		out->fDouble = (double)f;
+		pCur = fast_atoreal_move(pCur,f);
+		out->fDouble = (float)f;
 		break;
 
 	default:
@@ -902,7 +905,7 @@ bool PLY::PropertyInstance::ParseValueBinary(
 		}
 	case EDT_Double:
 		{
-		out->fDouble = *((double*)pCur);
+		out->fDouble = *((float*)pCur);
 
 		// Swap endianess
 		if (p_bBE)ByteSwap::Swap((int64_t*)&out->fDouble);

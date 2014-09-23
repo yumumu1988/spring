@@ -53,6 +53,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace Assimp;
 
+static const aiImporterDesc desc = {
+	"Valve SMD Importer",
+	"",
+	"",
+	"",
+	aiImporterFlags_SupportTextFlavour,
+	0,
+	0,
+	0,
+	0,
+	"smd vta" 
+};
+
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 SMDImporter::SMDImporter()
@@ -73,10 +86,9 @@ bool SMDImporter::CanRead( const std::string& pFile, IOSystem* /*pIOHandler*/, b
 
 // ------------------------------------------------------------------------------------------------
 // Get a list of all supported file extensions
-void SMDImporter::GetExtensionList(std::set<std::string>& extensions)
+const aiImporterDesc* SMDImporter::GetInfo () const
 {
-	extensions.insert("smd");
-	extensions.insert("vta");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -208,8 +220,8 @@ void SMDImporter::LogWarning(const char* msg)
 // Fix invalid time values in the file
 void SMDImporter::FixTimeValues()
 {
-	double dDelta = (double)iSmallestFrame;
-	double dMax = 0.0f;
+	float dDelta = (float)iSmallestFrame;
+	float dMax = 0.0f;
 	for (std::vector<SMD::Bone>::iterator
 		iBone =  asBones.begin();
 		iBone != asBones.end();++iBone)
@@ -566,10 +578,10 @@ void SMDImporter::ComputeAbsoluteBoneTransformations()
 		SMD::Bone& bone = asBones[i];
 
 		uint32_t iIndex = 0;
-		double dMin = 10e10;
+		float dMin = 10e10;
 		for (unsigned int i = 0; i < bone.sAnim.asKeys.size();++i)
 		{
-			double d = std::min(bone.sAnim.asKeys[i].dTime,dMin);
+			float d = std::min(bone.sAnim.asKeys[i].dTime,dMin);
 			if (d < dMin)	
 			{
 				dMin = d;
@@ -672,7 +684,7 @@ void SMDImporter::ParseFile()
 	const char* szCurrent = mBuffer;
 
 	// read line per line ...
-	while (true)
+	for ( ;; )
 	{
 		if(!SkipSpacesAndLineEnd(szCurrent,&szCurrent)) break;
 
@@ -738,7 +750,7 @@ unsigned int SMDImporter::GetTextureIndex(const std::string& filename)
 void SMDImporter::ParseNodesSection(const char* szCurrent,
 	const char** szCurrentOut)
 {
-	while (true)
+	for ( ;; )
 	{
 		// "end\n" - Ends the nodes section
 		if (0 == ASSIMP_strincmp(szCurrent,"end",3) &&
@@ -760,7 +772,7 @@ void SMDImporter::ParseTrianglesSection(const char* szCurrent,
 {
 	// Parse a triangle, parse another triangle, parse the next triangle ...
 	// and so on until we reach a token that looks quite similar to "end"
-	while (true)
+	for ( ;; )
 	{
 		if(!SkipSpacesAndLineEnd(szCurrent,&szCurrent)) break;
 
@@ -778,7 +790,7 @@ void SMDImporter::ParseVASection(const char* szCurrent,
 	const char** szCurrentOut)
 {
 	unsigned int iCurIndex = 0;
-	while (true)
+	for ( ;; )
 	{
 		if(!SkipSpacesAndLineEnd(szCurrent,&szCurrent)) break;
 
@@ -821,7 +833,7 @@ void SMDImporter::ParseSkeletonSection(const char* szCurrent,
 	const char** szCurrentOut)
 {
 	int iTime = 0;
-	while (true)
+	for ( ;; )
 	{
 		if(!SkipSpacesAndLineEnd(szCurrent,&szCurrent)) break;
 
@@ -869,13 +881,13 @@ void SMDImporter::ParseNodeInfo(const char* szCurrent,
 	if ('\"' != *szCurrent)
 	{
 		LogWarning("Bone name is expcted to be enclosed in "
-			"double quotation marks. ");
+			"float quotation marks. ");
 		bQuota = false;
 	}
 	else ++szCurrent;
 
 	const char* szEnd = szCurrent;
-	while (true)
+	for ( ;; )
 	{
 		if (bQuota && '\"' == *szEnd)
 		{
@@ -933,7 +945,7 @@ void SMDImporter::ParseSkeletonElement(const char* szCurrent,
 	bone.sAnim.asKeys.push_back(SMD::Bone::Animation::MatrixKey());
 	SMD::Bone::Animation::MatrixKey& key = bone.sAnim.asKeys.back();
 
-	key.dTime = (double)iTime;
+	key.dTime = (float)iTime;
 	if(!ParseFloat(szCurrent,&szCurrent,(float&)vPos.x))
 	{
 		LogErrorNoThrow("Unexpected EOF/EOL while parsing bone.pos.x");
@@ -1018,7 +1030,7 @@ bool SMDImporter::ParseFloat(const char* szCurrent,
 	if(!SkipSpaces(&szCurrent))
 		return false;
 
-	*szCurrentOut = fast_atoreal_move<float>(szCurrent,out);
+	*szCurrentOut = fast_atoreal_move(szCurrent,out);
 	return true;
 }
 

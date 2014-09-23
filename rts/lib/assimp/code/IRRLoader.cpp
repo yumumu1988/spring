@@ -45,6 +45,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "AssimpPCH.h"
 
+#ifndef ASSIMP_BUILD_NO_IRR_IMPORTER
+
 #include "IRRLoader.h"
 #include "ParsingUtils.h"
 #include "fast_atof.h"
@@ -55,12 +57,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Importer.h"
 
 // We need boost::common_factor to compute the lcm/gcd of a number
-#include <boost/math/common_factor_rt.hpp>
+//#include <boost/math/common_factor_rt.hpp>
 
 using namespace Assimp;
 using namespace irr;
 using namespace irr::io;
 
+static const aiImporterDesc desc = {
+	"Irrlicht Scene Reader",
+	"",
+	"",
+	"http://irrlicht.sourceforge.net/",
+	aiImporterFlags_SupportTextFlavour,
+	0,
+	0,
+	0,
+	0,
+	"irr xml" 
+};
 
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
@@ -98,10 +112,9 @@ bool IRRImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 }
 
 // ------------------------------------------------------------------------------------------------
-void IRRImporter::GetExtensionList(std::set<std::string>& extensions)
+const aiImporterDesc* IRRImporter::GetInfo () const
 {
-	extensions.insert("irr");
-	extensions.insert("xml");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -377,7 +390,7 @@ void IRRImporter::ComputeAnimations(Node* root, aiNode* real, std::vector<aiNode
 				}
 
 				int lcm = 360;
-
+/*
 				if (angles[0])
 					lcm  = boost::math::lcm(lcm,angles[0]);
 
@@ -386,7 +399,7 @@ void IRRImporter::ComputeAnimations(Node* root, aiNode* real, std::vector<aiNode
 
 				if (angles[2])
 					lcm  = boost::math::lcm(lcm,angles[2]);
-
+*/
 				if (360 == lcm)
 					break;
 
@@ -419,7 +432,7 @@ void IRRImporter::ComputeAnimations(Node* root, aiNode* real, std::vector<aiNode
 					aiQuatKey& q = anim->mRotationKeys[i];
 
 					q.mValue = aiQuaternion(angle.x, angle.y, angle.z);
-					q.mTime = (double)i;
+					q.mTime = (float)i;
 
 					// increase the angle
 					angle += in.direction;
@@ -436,8 +449,8 @@ void IRRImporter::ComputeAnimations(Node* root, aiNode* real, std::vector<aiNode
 				// Find out how much time we'll need to perform a 
 				// full circle. 
 				// -----------------------------------------------------
-				const double seconds = (1. / in.speed) / 1000.;
-				const double tdelta = 1000. / fps;
+				const float seconds = (1. / in.speed) / 1000.;
+				const float tdelta = 1000. / fps;
 
 				anim->mNumPositionKeys = (unsigned int) (fps * seconds);
 				anim->mPositionKeys = new aiVectorKey[anim->mNumPositionKeys];
@@ -457,7 +470,7 @@ void IRRImporter::ComputeAnimations(Node* root, aiNode* real, std::vector<aiNode
 					key.mTime = i * tdelta;
 
 					const float t = (float) ( in.speed * key.mTime );
-					key.mValue = in.circleCenter  + in.circleRadius * ((vecU*math::cosf(t)) + (vecV*math::sinf(t)));
+					key.mValue = in.circleCenter  + in.circleRadius * ((vecU * math::cos(t)) + (vecV * math::sin(t)));
 				}
 
 				// This animation is repeated and repeated ...
@@ -468,8 +481,8 @@ void IRRImporter::ComputeAnimations(Node* root, aiNode* real, std::vector<aiNode
 		case Animator::FLY_STRAIGHT:
 			{
 				anim->mPostState = anim->mPreState = (in.loop ? aiAnimBehaviour_REPEAT : aiAnimBehaviour_CONSTANT);
-				const double seconds = in.timeForWay / 1000.;
-				const double tdelta = 1000. / fps;
+				const float seconds = in.timeForWay / 1000.;
+				const float tdelta = 1000. / fps;
 
 				anim->mNumPositionKeys = (unsigned int) (fps * seconds);
 				anim->mPositionKeys = new aiVectorKey[anim->mNumPositionKeys];
@@ -478,7 +491,7 @@ void IRRImporter::ComputeAnimations(Node* root, aiNode* real, std::vector<aiNode
 				const float lengthOfWay = diff.Length();
 				diff.Normalize();
 
-				const double timeFactor = lengthOfWay / in.timeForWay;
+				const float timeFactor = lengthOfWay / in.timeForWay;
 
 				// build the output keys
 				for (unsigned int i = 0; i < anim->mNumPositionKeys;++i)	{
@@ -547,7 +560,7 @@ void IRRImporter::ComputeAnimations(Node* root, aiNode* real, std::vector<aiNode
 
 					// build a simple translation matrix from it
 					key.mValue = t2;
-					key.mTime  = (double) i;
+					key.mTime  = (float) i;
 				}
 			}
 			break;
@@ -1460,3 +1473,5 @@ void IRRImporter::InternReadFile( const std::string& pFile,
 	 */
 	return;
 }
+
+#endif // !! ASSIMP_BUILD_NO_IRR_IMPORTER

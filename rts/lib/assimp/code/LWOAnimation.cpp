@@ -49,6 +49,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AssimpPCH.h"
 #if (!defined ASSIMP_BUILD_NO_LWO_IMPORTER) && (!defined ASSIMP_BUILD_NO_LWS_IMPORTER)
 
+#include <functional>
+
 // internal headers
 #include "LWOFileData.h"
 
@@ -57,7 +59,7 @@ using namespace Assimp::LWO;
 
 // ------------------------------------------------------------------------------------------------
 // Construct an animation resolver from a given list of envelopes
-AnimResolver::AnimResolver(std::list<Envelope>& _envelopes,double tick)
+AnimResolver::AnimResolver(std::list<Envelope>& _envelopes,float tick)
 	: envelopes   (_envelopes)
 	, sample_rate (0.)
 {
@@ -137,10 +139,10 @@ void AnimResolver::UpdateAnimRangeSetup()
 	for (std::list<LWO::Envelope>::iterator it = envelopes.begin(); it != envelopes.end(); ++it) {
 		if ((*it).keys.empty()) continue;
 	
-		const double my_first = (*it).keys.front().time;
-		const double my_last  = (*it).keys.back().time;
+		const float my_first = (*it).keys.front().time;
+		const float my_last  = (*it).keys.back().time;
 
-		const double delta = my_last-my_first;
+		const float delta = my_last-my_first;
 		const size_t old_size = (*it).keys.size();
 
 		const float value_delta = (*it).keys.back().value - (*it).keys.front().value; 
@@ -154,9 +156,9 @@ void AnimResolver::UpdateAnimRangeSetup()
 			case LWO::PrePostBehaviour_Repeat:
 			case LWO::PrePostBehaviour_Oscillate:
 				{
-				const double start_time = delta - math::fmod((float)(my_first-first),(float)delta);
+				const float start_time = delta - fmod(my_first-first,delta);
 				std::vector<LWO::Key>::iterator n = std::find_if((*it).keys.begin(),(*it).keys.end(), 
-					std::bind1st(std::greater<double>(),start_time)),m;
+					std::bind1st(std::greater<float>(),start_time)),m;
 
 				size_t ofs = 0;
 				if (n != (*it).keys.end()) {
@@ -183,9 +185,9 @@ void AnimResolver::UpdateAnimRangeSetup()
 
 				// update time values 
 				n = (*it).keys.end() - (old_size+1);
-				double cur_minus = delta;
+				float cur_minus = delta;
 				unsigned int tt = 1;
-				for (const double tmp =  delta*(num+1);cur_minus <= tmp;cur_minus += delta,++tt) {
+				for (const float tmp =  delta*(num+1);cur_minus <= tmp;cur_minus += delta,++tt) {
 					m = (delta == tmp ? (*it).keys.begin() :  n - (old_size+1));
 					for (;m != n; --n) {
 						(*n).time -= cur_minus;
@@ -255,7 +257,7 @@ void AnimResolver::ExtractBindPose(aiMatrix4x4& out)
 // ------------------------------------------------------------------------------------------------
 // Do a single interpolation on a channel 
 void AnimResolver::DoInterpolation(std::vector<LWO::Key>::const_iterator cur, 
-	LWO::Envelope* envl,double time, float& fill)
+	LWO::Envelope* envl,float time, float& fill)
 {
 	if (envl->keys.size() == 1) {
 		fill = envl->keys[0].value;
@@ -308,7 +310,7 @@ void AnimResolver::DoInterpolation(std::vector<LWO::Key>::const_iterator cur,
 // ------------------------------------------------------------------------------------------------
 // Almost the same, except we won't handle pre/post conditions here
 void AnimResolver::DoInterpolation2(std::vector<LWO::Key>::const_iterator beg, 
-	std::vector<LWO::Key>::const_iterator end,double time, float& fill)
+	std::vector<LWO::Key>::const_iterator end,float time, float& fill)
 {
 	switch ((*end).inter) {
 		
@@ -328,17 +330,17 @@ void AnimResolver::DoInterpolation2(std::vector<LWO::Key>::const_iterator beg,
 // ------------------------------------------------------------------------------------------------
 // Subsample animation track by given key values
 void AnimResolver::SubsampleAnimTrack(std::vector<aiVectorKey>& /*out*/,
-	double /*time*/ ,double /*sample_delta*/ )
+	float /*time*/ ,float /*sample_delta*/ )
 {
 	//ai_assert(out.empty() && sample_delta);
 
-	//const double time_start = out.back().mTime;
+	//const float time_start = out.back().mTime;
 //	for ()
 }
 
 // ------------------------------------------------------------------------------------------------
 // Track interpolation
-void AnimResolver::InterpolateTrack(std::vector<aiVectorKey>& out,aiVectorKey& fill,double time)
+void AnimResolver::InterpolateTrack(std::vector<aiVectorKey>& out,aiVectorKey& fill,float time)
 {
 	// subsample animation track?
 	if (flags & AI_LWO_ANIM_FLAG_SAMPLE_ANIMS) {
@@ -417,7 +419,7 @@ void AnimResolver::GetKeys(std::vector<aiVectorKey>& out,
 
 	// guess how many keys we'll get
 	size_t reserve;
-	double sr = 1.;
+	float sr = 1.;
 	if (flags & AI_LWO_ANIM_FLAG_SAMPLE_ANIMS) {
 		if (!sample_rate)
 			sr = 100.f;
@@ -433,7 +435,7 @@ void AnimResolver::GetKeys(std::vector<aiVectorKey>& out,
 
 	// Iterate through all three arrays at once - it's tricky, but 
 	// rather interesting to implement.
-	double lasttime = std::min(envl_x->keys[0].time,std::min(envl_y->keys[0].time,envl_z->keys[0].time));
+	float lasttime = std::min(envl_x->keys[0].time,std::min(envl_y->keys[0].time,envl_z->keys[0].time));
 	
 	cur_x = envl_x->keys.begin();
 	cur_y = envl_y->keys.begin();
@@ -446,8 +448,8 @@ void AnimResolver::GetKeys(std::vector<aiVectorKey>& out,
 
 		if ((*cur_x).time == (*cur_y).time && (*cur_x).time == (*cur_z).time ) {
 
-			// we have a keyframe for all of them defined .. great,
-			// we don't need to fucking interpolate here ...
+			// we have a keyframe for all of them defined .. this means
+			// we don't need to interpolate here.
 			fill.mTime = (*cur_x).time;
 
 			fill.mValue.x = (*cur_x).value;

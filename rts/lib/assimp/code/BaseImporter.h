@@ -106,7 +106,7 @@ private:
  * imports the given file. ReadFile is not overridable, it just calls 
  * InternReadFile() and catches any ImportErrorException that might occur.
  */
-class BaseImporter
+class ASSIMP_API BaseImporter
 {
 	friend class Importer;
 
@@ -187,18 +187,22 @@ public:
 		const Importer* pImp
 		);
 
-protected:
+	
+	// -------------------------------------------------------------------
+	/** Called by #Importer::GetImporterInfo to get a description of 
+	 *  some loader features. Importers must provide this information. */
+	virtual const aiImporterDesc* GetInfo() const = 0;
+
+
 
 	// -------------------------------------------------------------------
-	/** Called by Importer::GetExtensionList() for each loaded importer.
-	 *  Implementations are expected to insert() all file extensions
-	 *  handled by them into the extension set. A loader capable of
-	 *  reading certain files with the extension BLA would place the
-	 *  string bla (lower-case!) in the output set.
-	 * @param extensions Output set. */
-	virtual void GetExtensionList(
-		std::set<std::string>& extensions
-		) = 0;
+	/** Called by #Importer::GetExtensionList for each loaded importer.
+	 *  Take the extension list contained in the structure returned by
+	 *  #GetInfo and insert all file extensions into the given set.
+	 *  @param extension set to collect file extensions in*/
+	void GetExtensionList(std::set<std::string>& extensions);
+
+protected:
 
 	// -------------------------------------------------------------------
 	/** Imports the given file into the given scene structure. The 
@@ -326,6 +330,15 @@ public: // static utilities
 	 *  is resized as appropriate. */
 	static void ConvertToUTF8(
 		std::vector<char>& data);
+
+	// -------------------------------------------------------------------
+	/** An utility for all text file loaders. It converts a file from our
+	 *   UTF8 character set back to ISO-8859-1. Errors are reported, but ignored.
+	 *
+	 *  @param data File buffer to be converted from UTF8 to ISO-8859-1. The buffer
+	 *  is resized as appropriate. */
+	static void ConvertUTF8toISO8859_1(
+		std::string& data);
 
 	// -------------------------------------------------------------------
 	/** Utility for text file loaders which copies the contents of the

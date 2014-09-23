@@ -58,6 +58,20 @@ using namespace Assimp;
 // Minimum weight value. Weights inside [-n ... n] are ignored
 #define AI_MD5_WEIGHT_EPSILON 1e-5f
 
+
+static const aiImporterDesc desc = {
+	"Doom 3 / MD5 Mesh Importer",
+	"",
+	"",
+	"",
+	aiImporterFlags_SupportBinaryFlavour,
+	0,
+	0,
+	0,
+	0,
+	"md5mesh md5camera md5anim"
+};
+
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 MD5Importer::MD5Importer()
@@ -90,11 +104,9 @@ bool MD5Importer::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 
 // ------------------------------------------------------------------------------------------------
 // Get list of all supported extensions
-void MD5Importer::GetExtensionList(std::set<std::string>& extensions)
+const aiImporterDesc* MD5Importer::GetInfo () const
 {
-	extensions.insert("md5anim");
-	extensions.insert("md5mesh");
-	extensions.insert("md5camera");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -175,7 +187,6 @@ void MD5Importer::LoadFileIntoMemory (IOStream* file)
 	ai_assert(fileSize);
 
 	// allocate storage and copy the contents of the file to a memory buffer
-	pScene = pScene;
 	mBuffer = new char[fileSize+1];
 	file->Read( (void*)mBuffer, 1, fileSize);
 	iLineNumber = 1;
@@ -587,7 +598,7 @@ void MD5Importer::LoadMD5AnimFile ()
 		anim->mTicksPerSecond = animParser.fFrameRate;
 
 		for (FrameList::const_iterator iter = animParser.mFrames.begin(), iterEnd = animParser.mFrames.end();iter != iterEnd;++iter){
-			double dTime = (double)(*iter).iIndex;
+			float dTime = (float)(*iter).iIndex;
 			aiNodeAnim** pcAnimNode = anim->mChannels;
 			if (!(*iter).mValues.empty() || iter == animParser.mFrames.begin()) /* be sure we have at least one frame */
 			{

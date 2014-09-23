@@ -53,6 +53,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace Assimp;
 
+static const aiImporterDesc desc = {
+	"Neutral File Format Importer",
+	"",
+	"",
+	"",
+	aiImporterFlags_SupportBinaryFlavour,
+	0,
+	0,
+	0,
+	0,
+	"enff nff" 
+};
+
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 NFFImporter::NFFImporter()
@@ -72,16 +85,15 @@ bool NFFImporter::CanRead( const std::string& pFile, IOSystem* /*pIOHandler*/, b
 
 // ------------------------------------------------------------------------------------------------
 // Get the list of all supported file extensions
-void NFFImporter::GetExtensionList(std::set<std::string>& extensions)
+const aiImporterDesc* NFFImporter::GetInfo () const
 {
-	extensions.insert("enff");
-	extensions.insert("nff");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
 #define AI_NFF_PARSE_FLOAT(f) \
 	SkipSpaces(&sz); \
-	if (!::IsLineEnd(*sz))sz = fast_atoreal_move<float>(sz, (float&)f); 
+	if (!::IsLineEnd(*sz))sz = fast_atoreal_move(sz, (float&)f); 
 
 // ------------------------------------------------------------------------------------------------
 #define AI_NFF_PARSE_TRIPLE(v) \

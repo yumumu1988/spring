@@ -58,7 +58,7 @@ extern "C" {
 struct aiVectorKey
 {
 	/** The time of this key */
-	double mTime;     
+	float mTime;     
 	
 	/** The value of this key */
 	C_STRUCT aiVector3D mValue; 
@@ -69,7 +69,7 @@ struct aiVectorKey
 	aiVectorKey(){}
 
 	//! Construction from a given time and key value
-	aiVectorKey(double time, const aiVector3D& value)
+	aiVectorKey(float time, const aiVector3D& value)
 		:	mTime	(time)
 		,	mValue	(value)
 	{}
@@ -101,7 +101,7 @@ struct aiVectorKey
 struct aiQuatKey
 {
 	/** The time of this key */
-	double mTime;     
+	float mTime;     
 
 	/** The value of this key */
 	C_STRUCT aiQuaternion mValue; 
@@ -111,7 +111,7 @@ struct aiQuatKey
 	}
 
 	/** Construction from a given time and key value */
-	aiQuatKey(double time, const aiQuaternion& value)
+	aiQuatKey(float time, const aiQuaternion& value)
 		:	mTime	(time)
 		,	mValue	(value)
 	{}
@@ -141,7 +141,7 @@ struct aiQuatKey
 struct aiMeshKey 
 {
 	/** The time of this key */
-	double mTime;
+	float mTime;
 
 	/** Index into the aiMesh::mAnimMeshes array of the 
 	 *  mesh coresponding to the #aiMeshAnim hosting this
@@ -155,7 +155,7 @@ struct aiMeshKey
 	}
 
 	/** Construction from a given time and key value */
-	aiMeshKey(double time, const unsigned int value)
+	aiMeshKey(float time, const unsigned int value)
 		:	mTime	(time)
 		,	mValue	(value)
 	{}
@@ -208,7 +208,7 @@ enum aiAnimBehaviour
 	/** This value is not used, it is just here to force the
 	 *  the compiler to map this enum to a 32 Bit integer  */
 #ifndef SWIG
-	_aiAnimBehaviour_Force32Bit = 0x8fffffff
+	_aiAnimBehaviour_Force32Bit = INT_MAX
 #endif
 };
 
@@ -345,10 +345,10 @@ struct aiAnimation
 	C_STRUCT aiString mName;
 
 	/** Duration of the animation in ticks.  */
-	double mDuration;
+	float mDuration;
 
 	/** Ticks per second. 0 if not specified in the imported file */
-	double mTicksPerSecond;
+	float mTicksPerSecond;
 
 	/** The number of bone animation channels. Each channel affects
 	 *  a single node. */
@@ -457,7 +457,7 @@ struct Interpolator	 <aiVectorKey>	{
 
 template <>
 struct Interpolator <aiQuatKey>		{
-	void operator () (aiQuaternion& out, const aiQuatKey a,
+	void operator () (aiQuaternion& out, const aiQuatKey& a,
 		const aiQuatKey& b, float d) const
 	{
 		Interpolator<aiQuaternion> ipl;
@@ -467,7 +467,7 @@ struct Interpolator <aiQuatKey>		{
 
 template <>
 struct Interpolator <aiMeshKey>		{
-	void operator () (unsigned int& out, const aiMeshKey a,
+	void operator () (unsigned int& out, const aiMeshKey& a,
 		const aiMeshKey& b, float d) const
 	{
 		Interpolator<unsigned int> ipl;

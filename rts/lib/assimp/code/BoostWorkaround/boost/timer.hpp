@@ -49,19 +49,19 @@ class timer
 //        ~timer(){}
 //  timer& operator=( const timer& src );  // post: elapsed()==src.elapsed()
   void   restart() { _start_time = std::clock(); } // post: elapsed()==0
-  double elapsed() const                  // return elapsed time in seconds
-    { return  double(std::clock() - _start_time) / CLOCKS_PER_SEC; }
+  float elapsed() const                  // return elapsed time in seconds
+    { return  float(std::clock() - _start_time) / CLOCKS_PER_SEC; }
 
-  double elapsed_max() const   // return estimated maximum value for elapsed()
+  float elapsed_max() const   // return estimated maximum value for elapsed()
   // Portability warning: elapsed_max() may return too high a value on systems
   // where std::clock_t overflows or resets at surprising values.
   {
-    return (double((std::numeric_limits<std::clock_t>::max)())
-       - double(_start_time)) / double(CLOCKS_PER_SEC); 
+    return (float((std::numeric_limits<std::clock_t>::max)())
+       - float(_start_time)) / float(CLOCKS_PER_SEC); 
   }
 
-  double elapsed_min() const            // return minimum value for elapsed()
-   { return double(1)/double(CLOCKS_PER_SEC); }
+  float elapsed_min() const            // return minimum value for elapsed()
+   { return float(1)/float(CLOCKS_PER_SEC); }
 
  private:
   std::clock_t _start_time;

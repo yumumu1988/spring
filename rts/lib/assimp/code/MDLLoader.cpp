@@ -54,6 +54,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace Assimp;
 
+static const aiImporterDesc desc = {
+	"Quake Mesh / 3D GameStudio Mesh Importer",
+	"",
+	"",
+	"",
+	aiImporterFlags_SupportBinaryFlavour,
+	0,
+	0,
+	7,
+	0,
+	"mdl"
+};
+
 // ------------------------------------------------------------------------------------------------
 // Ugly stuff ... nevermind
 #define _AI_MDL7_ACCESS(_data, _index, _limit, _type)				\
@@ -116,9 +129,9 @@ void MDLImporter::SetupProperties(const Importer* pImp)
 
 // ------------------------------------------------------------------------------------------------
 // Get a list of all supported extensions
-void MDLImporter::GetExtensionList(std::set<std::string>& extensions)
+const aiImporterDesc* MDLImporter::GetInfo () const
 {
-	extensions.insert( "mdl" );
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1683,7 +1696,7 @@ void MDLImporter::BuildOutputAnims_3DGS_MDL7(
 
 			// get the last frame ... (needn't be equal to pcHeader->frames_num)
 			for (size_t qq = 0; qq < apcBonesOut[i]->pkeyPositions.size();++qq)	{
-				pcAnim->mDuration = std::max(pcAnim->mDuration, (double)
+				pcAnim->mDuration = std::max(pcAnim->mDuration, (float)
 					apcBonesOut[i]->pkeyPositions[qq].mTime);
 			}
 			++pcAnim->mNumChannels;
@@ -1760,7 +1773,7 @@ void MDLImporter::AddAnimationBoneTrafoKey_3DGS_MDL7(unsigned int iTrafo,
 	mTransform.Decompose(vScaling.mValue,qRotation.mValue,vPosition.mValue);
 
 	// now generate keys
-	vScaling.mTime = qRotation.mTime = vPosition.mTime = (double)iTrafo;
+	vScaling.mTime = qRotation.mTime = vPosition.mTime = (float)iTrafo;
 
 	// add the keys to the bone
 	MDL::IntBone_MDL7* const pcBoneOut = apcBonesOut[pcBoneTransforms->bone_index];

@@ -77,7 +77,23 @@ struct free_it
 	void* free;
 };
 
-template<> const char* LogFunctions<XGLImporter>::log_prefix = "XGL: ";
+namespace Assimp { // this has to be in here because LogFunctions is in ::Assimp
+template<> const std::string LogFunctions<XGLImporter>::log_prefix = "XGL: ";
+
+}
+
+static const aiImporterDesc desc = {
+	"XGL Importer",
+	"",
+	"",
+	"",
+	aiImporterFlags_SupportTextFlavour,
+	0,
+	0,
+	0,
+	0,
+	"xgl zgl" 
+};
 
 
 // ------------------------------------------------------------------------------------------------
@@ -115,10 +131,9 @@ bool XGLImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 
 // ------------------------------------------------------------------------------------------------
 // Get a list of all file extensions which are handled by this class
-void XGLImporter::GetExtensionList(std::set<std::string>& extensions)
+const aiImporterDesc* XGLImporter::GetInfo () const
 {
-	extensions.insert("xgl");
-	extensions.insert("zgl");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -382,7 +397,7 @@ aiNode* XGLImporter::ReadObject(TempScope& scope, bool skipFirst, const char* cl
 				// XXX
 			}
 			else if (s == "meshref") {
-				const int id = ReadIndexFromText();
+				const unsigned int id = static_cast<unsigned int>( ReadIndexFromText() );
 
 				std::multimap<unsigned int, aiMesh*>::iterator it = scope.meshes.find(id), end = scope.meshes.end();
 				if (it == end) {

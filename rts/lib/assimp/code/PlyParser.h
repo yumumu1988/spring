@@ -68,7 +68,7 @@ ushort     unsigned short integer    2
 int        integer                   4
 uint       unsigned integer          4
 float      single-precision float    4
-double     double-precision float    8
+float     float-precision float    8
 
 int8
 int16
@@ -315,7 +315,7 @@ public:
 		float fFloat;
 
 		//! Float64 representation of the property
-		double fDouble;
+		float fDouble;
 
 	};
 
@@ -434,7 +434,7 @@ private:
 
 	// -------------------------------------------------------------------
 	//! Handle the file header and read all element descriptions
-	bool ParseHeader (const char* pCur,const char** pCurOut);
+	bool ParseHeader (const char* pCur,const char** pCurOut, bool p_bBE);
 
 	// -------------------------------------------------------------------
 	//! Read in all element instance lists

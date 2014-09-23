@@ -80,7 +80,7 @@ protected:
 	// -------------------------------------------------------------------
 	/**
 	 */
-	void GetExtensionList(std::set<std::string>& extensions);
+	const aiImporterDesc* GetInfo () const;
 
 	// -------------------------------------------------------------------
 	/** 
@@ -297,7 +297,7 @@ private:
 private:
 
 	/** Configuration option: desired output FPS */
-	double fps;
+	float fps;
 
 	/** Configuration option: speed flag was set? */
 	bool configSpeedFlag;

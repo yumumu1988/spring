@@ -48,6 +48,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "BaseImporter.h"
 #include "../include/assimp/types.h"
 
+#ifndef ASSIMP_BUILD_NO_3DS_IMPORTER
+
 struct aiNode;
 #include "3DSHelper.h"
 
@@ -85,10 +87,10 @@ public:
 protected:
 
 	// -------------------------------------------------------------------
-	/** Called by Importer::GetExtensionList() for each loaded importer.
-	 * See BaseImporter::GetExtensionList() for details
+	/** Return importer meta information.
+	 * See #BaseImporter::GetInfo for the details
 	 */
-	void GetExtensionList(std::set<std::string>& extensions);
+	const aiImporterDesc* GetInfo () const;
 
 	// -------------------------------------------------------------------
 	/** Imports the given file into the given scene structure. 
@@ -272,5 +274,7 @@ protected:
 };
 
 } // end of namespace Assimp
+
+#endif // !! ASSIMP_BUILD_NO_3DS_IMPORTER
 
 #endif // AI_3DSIMPORTER_H_INC

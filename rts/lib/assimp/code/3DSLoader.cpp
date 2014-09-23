@@ -52,6 +52,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "3DSLoader.h"
 
 using namespace Assimp;
+
+static const aiImporterDesc desc = {
+	"Discreet 3DS Importer",
+	"",
+	"",
+	"Limited animation support",
+	aiImporterFlags_SupportBinaryFlavour,
+	0,
+	0,
+	0,
+	0,
+	"3ds prj" 
+};
+
 		
 // ------------------------------------------------------------------------------------------------
 // Begins a new parsing block
@@ -65,6 +79,8 @@ using namespace Assimp;
 	Discreet3DS::Chunk chunk;                                            \
 	ReadChunk(&chunk);                                                   \
 	int chunkSize = chunk.Size-sizeof(Discreet3DS::Chunk);	             \
+    if(chunkSize <= 0)                                                   \
+        continue;                                                        \
 	const int oldReadLimit = stream->GetReadLimit();                     \
 	stream->SetReadLimit(stream->GetCurrentPos() + chunkSize);           \
 	
@@ -108,11 +124,10 @@ bool Discreet3DSImporter::CanRead( const std::string& pFile, IOSystem* pIOHandle
 }
 
 // ------------------------------------------------------------------------------------------------
-// Get list of all extension supported by this loader
-void Discreet3DSImporter::GetExtensionList(std::set<std::string>& extensions)
+// Loader registry entry
+const aiImporterDesc* Discreet3DSImporter::GetInfo () const
 {
-	extensions.insert("3ds");
-	extensions.insert("prj");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -216,8 +231,8 @@ void Discreet3DSImporter::ReadChunk(Discreet3DS::Chunk* pcOut)
 {
 	ai_assert(pcOut != NULL);
 
-	pcOut->Flag = stream->GetU2();
-	pcOut->Size = stream->GetU4();
+	pcOut->Flag = stream->GetI2();
+	pcOut->Size = stream->GetI4();
 
 	if (pcOut->Size - sizeof(Discreet3DS::Chunk) > stream->GetRemainingSize())
 		throw DeadlyImportError("Chunk is too large");
@@ -644,14 +659,22 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 		// Now find out whether we have this node already (target animation channels 
 		// are stored with a separate object ID)
 		D3DS::Node* pcNode = FindNode(mRootNode,name);
-		if (pcNode)
+		int instanceNumber = 1;
+
+		if ( pcNode)
 		{
-			// Make this node the current node
-			mCurrentNode = pcNode;
-			break;	
+			// if the source is not a CHUNK_TRACKINFO block it wont be an object instance
+			if (parent != Discreet3DS::CHUNK_TRACKINFO)
+			{
+				mCurrentNode = pcNode;
+				break;
+			}
+			pcNode->mInstanceCount++;
+			instanceNumber = pcNode->mInstanceCount;
 		}
 		pcNode = new D3DS::Node();
 		pcNode->mName = name;
+		pcNode->mInstanceNumber = instanceNumber;
 
 		// There are two unknown values which we can safely ignore
 		stream->IncPtr(4);
@@ -737,7 +760,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 
 			// Setup a new position key
 			aiVectorKey v;
-			v.mTime = (double)fidx;
+			v.mTime = (float)fidx;
 
 			SkipTCBInfo();
 			v.mValue.x = stream->GetF4();
@@ -780,7 +803,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 
 			// Setup a new position key
 			aiFloatKey v;
-			v.mTime = (double)fidx;
+			v.mTime = (float)fidx;
 
 			// This is just a single float 
 			SkipTCBInfo();
@@ -828,7 +851,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 			SkipTCBInfo();
 
 			aiQuatKey v;
-			v.mTime = (double)fidx;
+			v.mTime = (float)fidx;
 
 			// The rotation keyframe is given as an axis-angle pair
 			const float rad = stream->GetF4();
@@ -875,7 +898,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 
 			// Setup a new key
 			aiVectorKey v;
-			v.mTime = (double)fidx;
+			v.mTime = (float)fidx;
 
 			// ... and read its value
 			v.mValue.x = stream->GetF4();

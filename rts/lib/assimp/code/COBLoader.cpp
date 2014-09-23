@@ -72,6 +72,20 @@ static const float units[] = {
 	1.f/1609.344f
 };	
 
+static const aiImporterDesc desc = {
+	"TrueSpace Object Importer",
+	"",
+	"",
+	"little-endian files only",
+	aiImporterFlags_SupportTextFlavour | aiImporterFlags_SupportBinaryFlavour,
+	0,
+	0,
+	0,
+	0,
+	"cob scn"
+};
+
+
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 COBImporter::COBImporter()
@@ -99,11 +113,10 @@ bool COBImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 }
 
 // ------------------------------------------------------------------------------------------------
-// List all extensions handled by this loader
-void COBImporter::GetExtensionList(std::set<std::string>& app)
+// Loader meta information
+const aiImporterDesc* COBImporter::GetInfo () const
 {
-	app.insert("cob");
-	app.insert("scn");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1032,9 +1045,9 @@ void COBImporter::ReadPolH_Binary(COB::Scene& out, StreamReaderLE& reader, const
 		v.y = reader.GetF4();
 	}
 
-	const size_t numfuck = reader.GetI4();
-	msh.faces.reserve(numfuck);
-	for(size_t i = 0; i < numfuck; ++i) {
+	const size_t numf = reader.GetI4();
+	msh.faces.reserve(numf);
+	for(size_t i = 0; i < numf; ++i) {
 		// XXX backface culling flag is 0x10 in flags
 
 		// hole?

@@ -86,7 +86,7 @@ AI_WONT_RETURN void ValidateDSProcess::ReportError(const char* msg,...)
 	ai_assert(iLen > 0);
 
 	va_end(args);
-#ifdef _DEBUG
+#ifdef ASSIMP_BUILD_DEBUG
 	ai_assert( false );
 #endif
 	throw DeadlyImportError("Validation failed: " + std::string(szBuffer,iLen));
@@ -812,7 +812,7 @@ void ValidateDSProcess::Validate( const aiAnimation* pAnimation,
 			this->ReportError("aiNodeAnim::mPositionKeys is NULL (aiNodeAnim::mNumPositionKeys is %i)",
 				pNodeAnim->mNumPositionKeys);
 		}
-		double dLast = -10e10;
+		float dLast = -10e10;
 		for (unsigned int i = 0; i < pNodeAnim->mNumPositionKeys;++i)
 		{
 			// ScenePreprocessor will compute the duration if still the default value
@@ -843,7 +843,7 @@ void ValidateDSProcess::Validate( const aiAnimation* pAnimation,
 			this->ReportError("aiNodeAnim::mRotationKeys is NULL (aiNodeAnim::mNumRotationKeys is %i)",
 				pNodeAnim->mNumRotationKeys);
 		}
-		double dLast = -10e10;
+		float dLast = -10e10;
 		for (unsigned int i = 0; i < pNodeAnim->mNumRotationKeys;++i)
 		{
 			if (pAnimation->mDuration > 0. && pNodeAnim->mRotationKeys[i].mTime > pAnimation->mDuration+0.001)
@@ -870,7 +870,7 @@ void ValidateDSProcess::Validate( const aiAnimation* pAnimation,
 			ReportError("aiNodeAnim::mScalingKeys is NULL (aiNodeAnim::mNumScalingKeys is %i)",
 				pNodeAnim->mNumScalingKeys);
 		}
-		double dLast = -10e10;
+		float dLast = -10e10;
 		for (unsigned int i = 0; i < pNodeAnim->mNumScalingKeys;++i)
 		{
 			if (pAnimation->mDuration > 0. && pNodeAnim->mScalingKeys[i].mTime > pAnimation->mDuration+0.001)

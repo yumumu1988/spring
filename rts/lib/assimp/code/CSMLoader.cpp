@@ -54,9 +54,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace Assimp;
 
+static const aiImporterDesc desc = {
+	"CharacterStudio Motion Importer (MoCap)",
+	"",
+	"",
+	"",
+	aiImporterFlags_SupportTextFlavour,
+	0,
+	0,
+	0,
+	0,
+	"csm" 
+};
+
+
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 CSMImporter::CSMImporter()
+: noSkeletonMesh()
 {}
 
 // ------------------------------------------------------------------------------------------------
@@ -83,16 +98,16 @@ bool CSMImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 
 // ------------------------------------------------------------------------------------------------
 // Build a string of all file extensions supported
-void CSMImporter::GetExtensionList(std::set<std::string>& extensions)
+const aiImporterDesc* CSMImporter::GetInfo () const
 {
-	extensions.insert("csm");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
 // Setup configuration properties for the loader
-void CSMImporter::SetupProperties(const Importer* /*pImp*/)
+void CSMImporter::SetupProperties(const Importer* pImp)
 {
-	// nothing to be done for the moment
+	noSkeletonMesh = pImp->GetPropertyInteger(AI_CONFIG_IMPORT_NO_SKELETON_MESHES,0) != 0;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -134,7 +149,7 @@ void CSMImporter::InternReadFile( const std::string& pFile,
 			else if (TokenMatchI(buffer,"rate",4))	{
 				SkipSpaces(&buffer);
 				float d;
-				buffer = fast_atoreal_move<float>(buffer,d);
+				buffer = fast_atoreal_move(buffer,d);
 				anim->mTicksPerSecond = d;
 			}
 			else if (TokenMatchI(buffer,"order",5))	{
@@ -213,16 +228,16 @@ void CSMImporter::InternReadFile( const std::string& pFile,
 						}
 						else	{
 							aiVectorKey* sub = s->mPositionKeys + s->mNumPositionKeys;
-							sub->mTime = (double)frame;
-							buffer = fast_atoreal_move<float>(buffer, (float&)sub->mValue.x);
+							sub->mTime = (float)frame;
+							buffer = fast_atoreal_move(buffer, (float&)sub->mValue.x);
 
 							if(!SkipSpacesAndLineEnd(&buffer))
 								throw DeadlyImportError("CSM: Unexpected EOF occured reading sample y coord");
-							buffer = fast_atoreal_move<float>(buffer, (float&)sub->mValue.y);
+							buffer = fast_atoreal_move(buffer, (float&)sub->mValue.y);
 
 							if(!SkipSpacesAndLineEnd(&buffer))
 								throw DeadlyImportError("CSM: Unexpected EOF occured reading sample z coord");
-							buffer = fast_atoreal_move<float>(buffer, (float&)sub->mValue.z);
+							buffer = fast_atoreal_move(buffer, (float&)sub->mValue.z);
 
 							++s->mNumPositionKeys;
 						}
@@ -275,7 +290,10 @@ void CSMImporter::InternReadFile( const std::string& pFile,
 
 	// mark the scene as incomplete and run SkeletonMeshBuilder on it
 	pScene->mFlags |= AI_SCENE_FLAGS_INCOMPLETE;
-	SkeletonMeshBuilder maker(pScene,pScene->mRootNode,true);
+	
+	if (!noSkeletonMesh) {
+		SkeletonMeshBuilder maker(pScene,pScene->mRootNode,true);
+	}
 }
 
 #endif // !! ASSIMP_BUILD_NO_CSM_IMPORTER

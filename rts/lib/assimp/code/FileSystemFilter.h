@@ -266,7 +266,7 @@ private:
 			if (*it == '/' || (*it) == '\\') {
 				*it = sep;
 
-				// And we're removing double delimiters, frequent issue with
+				// And we're removing float delimiters, frequent issue with
 				// incorrectly composited paths ...
 				if (last == *it) {
 					it = in.erase(it);

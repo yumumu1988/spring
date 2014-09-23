@@ -184,7 +184,7 @@ protected:
 
 	// -------------------------------------------------------------------
 	// Get list of supported extensions
-	void GetExtensionList(std::set<std::string>& extensions);
+	const aiImporterDesc* GetInfo () const;
 
 	// -------------------------------------------------------------------
 	// Import file into given scene data structure
@@ -232,7 +232,9 @@ private:
 	bool configSpeedFlag;
 	IOSystem* io;
 
-	double first,last,fps;
+	float first,last,fps;
+
+	bool noSkeletonMesh; 
 };
 
 } // end of namespace Assimp

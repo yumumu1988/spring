@@ -53,6 +53,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace Assimp;
 
+static const aiImporterDesc desc = {
+	"Raw Importer",
+	"",
+	"",
+	"",
+	aiImporterFlags_SupportTextFlavour,
+	0,
+	0,
+	0,
+	0,
+	"raw"
+};
+
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 RAWImporter::RAWImporter()
@@ -71,10 +84,9 @@ bool RAWImporter::CanRead( const std::string& pFile, IOSystem* /*pIOHandler*/, b
 }
 
 // ------------------------------------------------------------------------------------------------
-// Get the list of all supported file extensions
-void RAWImporter::GetExtensionList(std::set<std::string>& extensions)
+const aiImporterDesc* RAWImporter::GetInfo () const
 {
-	extensions.insert("raw");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -137,7 +149,7 @@ void RAWImporter::InternReadFile( const std::string& pFile,
 			for (num = 0; num < 12;++num)
 			{
 				if(!SkipSpaces(&sz) || !IsNumeric(*sz))break;
-				sz = fast_atoreal_move<float>(sz,data[num]);
+				sz = fast_atoreal_move(sz,data[num]);
 			}
 			if (num != 12 && num != 9)
 			{

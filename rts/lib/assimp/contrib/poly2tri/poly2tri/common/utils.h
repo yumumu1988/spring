@@ -32,6 +32,9 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+// Otherwise #defines like M_PI are undeclared under Visual Studio
+#define _USE_MATH_DEFINES
+
 #include <exception>
 #include "lib/streflop/streflop_cond.h"
 #include "System/FastMath.h"
@@ -40,8 +43,8 @@
 
 namespace p2t {
 
-const double PI_3div4 = 3 * M_PI / 4;
-const double EPSILON = 1e-15;
+const float PI_3div4 = 3 * M_PI / 4;
+const float EPSILON = 1e-15;
 
 enum Orientation { CW, CCW, COLLINEAR };
 
@@ -57,9 +60,9 @@ enum Orientation { CW, CCW, COLLINEAR };
  */
 Orientation Orient2d(Point& pa, Point& pb, Point& pc)
 {
-  double detleft = (pa.x - pc.x) * (pb.y - pc.y);
-  double detright = (pa.y - pc.y) * (pb.x - pc.x);
-  double val = detleft - detright;
+  float detleft = (pa.x - pc.x) * (pb.y - pc.y);
+  float detright = (pa.y - pc.y) * (pb.x - pc.x);
+  float val = detleft - detright;
   if (val > -EPSILON && val < EPSILON) {
     return COLLINEAR;
   } else if (val > 0) {
@@ -70,27 +73,27 @@ Orientation Orient2d(Point& pa, Point& pb, Point& pc)
 
 bool InScanArea(Point& pa, Point& pb, Point& pc, Point& pd)
 {
-  double pdx = pd.x;
-  double pdy = pd.y;
-  double adx = pa.x - pdx;
-  double ady = pa.y - pdy;
-  double bdx = pb.x - pdx;
-  double bdy = pb.y - pdy;
+  float pdx = pd.x;
+  float pdy = pd.y;
+  float adx = pa.x - pdx;
+  float ady = pa.y - pdy;
+  float bdx = pb.x - pdx;
+  float bdy = pb.y - pdy;
 
-  double adxbdy = adx * bdy;
-  double bdxady = bdx * ady;
-  double oabd = adxbdy - bdxady;
+  float adxbdy = adx * bdy;
+  float bdxady = bdx * ady;
+  float oabd = adxbdy - bdxady;
 
   if (oabd <= EPSILON) {
     return false;
   }
 
-  double cdx = pc.x - pdx;
-  double cdy = pc.y - pdy;
+  float cdx = pc.x - pdx;
+  float cdy = pc.y - pdy;
 
-  double cdxady = cdx * ady;
-  double adxcdy = adx * cdy;
-  double ocad = cdxady - adxcdy;
+  float cdxady = cdx * ady;
+  float adxcdy = adx * cdy;
+  float ocad = cdxady - adxcdy;
 
   if (ocad <= EPSILON) {
     return false;

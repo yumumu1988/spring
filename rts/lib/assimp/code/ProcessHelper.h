@@ -147,11 +147,6 @@ struct MinMaxChooser;
 
 template <> struct MinMaxChooser<float> {
 	void operator ()(float& min,float& max) {
-		max = -1e10f;
-		min =  1e10f;
-}};
-template <> struct MinMaxChooser<double> {
-	void operator ()(double& min,double& max) {
 		max = -1e10;
 		min =  1e10;
 }};
@@ -185,12 +180,12 @@ template <typename T> struct MinMaxChooser< aiQuaterniont<T> > {
 
 template <> struct MinMaxChooser<aiVectorKey> {
 	void operator ()(aiVectorKey& min,aiVectorKey& max) {
-		MinMaxChooser<double>()(min.mTime,max.mTime);
+		MinMaxChooser<float>()(min.mTime,max.mTime);
 		MinMaxChooser<aiVector3D>()(min.mValue,max.mValue);
 }};
 template <> struct MinMaxChooser<aiQuatKey> {
 	void operator ()(aiQuatKey& min,aiQuatKey& max) {
-		MinMaxChooser<double>()(min.mTime,max.mTime);
+		MinMaxChooser<float>()(min.mTime,max.mTime);
 		MinMaxChooser<aiQuaternion>()(min.mValue,max.mValue);
 }};
 

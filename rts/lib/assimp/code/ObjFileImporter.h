@@ -77,8 +77,8 @@ public:
 
 private:
 
-	//! \brief	Appends the supported extention.
-	void GetExtensionList(std::set<std::string>& extensions);
+	//! \brief	Appends the supported extension.
+	const aiImporterDesc* GetInfo () const;
 
 	//!	\brief	File import implementation.
 	void InternReadFile(const std::string& pFile, aiScene* pScene, IOSystem* pIOHandler);
@@ -87,12 +87,12 @@ private:
 	void CreateDataFromImport(const ObjFile::Model* pModel, aiScene* pScene);
 	
 	//!	\brief	Creates all nodes stored in imported content.
-	aiNode *createNodes(const ObjFile::Model* pModel, const ObjFile::Object* pData, unsigned int uiMeshIndex,
+	aiNode *createNodes(const ObjFile::Model* pModel, const ObjFile::Object* pData,
 		aiNode *pParent, aiScene* pScene, std::vector<aiMesh*> &MeshArray);
 
 	//!	\brief	Creates topology data like faces and meshes for the geometry.
-	void createTopology(const ObjFile::Model* pModel, const ObjFile::Object* pData,
-		unsigned int uiMeshIndex, aiMesh* pMesh);	
+    aiMesh *createTopology( const ObjFile::Model* pModel, const ObjFile::Object* pData,
+		unsigned int uiMeshIndex );	
 	
 	//!	\brief	Creates vertices from model.
 	void createVertexArray(const ObjFile::Model* pModel, const ObjFile::Object* pCurrentObject,
@@ -103,28 +103,19 @@ private:
 
 	//!	\brief	Material creation.
 	void createMaterials(const ObjFile::Model* pModel, aiScene* pScene);
+	void addTextureMappingModeProperty(aiMaterial* mat, aiTextureType type, int clampMode = 1);
 
-	//!	\brief	Appends a child node to a parentnode and updates the datastructures.
+	//!	\brief	Appends a child node to a parent node and updates the data structures.
 	void appendChildToParentNode(aiNode *pParent, aiNode *pChild);
-
-	//!	\brief TODO!
-	void createAnimations();
 
 private:
 	//!	Data buffer
 	std::vector<char> m_Buffer;
 	//!	Pointer to root object instance
 	ObjFile::Object *m_pRootObject;
-	//!	Absolute pathname of model in filesystem
+	//!	Absolute pathname of model in file system
 	std::string m_strAbsPath;
 };
-
-// ------------------------------------------------------------------------------------------------
-//	
-inline void ObjFileImporter::GetExtensionList(std::set<std::string>& extensions)
-{
-	extensions.insert("obj");
-}
 
 // ------------------------------------------------------------------------------------------------
 

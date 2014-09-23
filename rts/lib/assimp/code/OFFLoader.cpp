@@ -54,6 +54,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace Assimp;
 
+static const aiImporterDesc desc = {
+	"OFF Importer",
+	"",
+	"",
+	"",
+	aiImporterFlags_SupportBinaryFlavour,
+	0,
+	0,
+	0,
+	0,
+	"off" 
+};
+
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 OFFImporter::OFFImporter()
@@ -82,9 +95,9 @@ bool OFFImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 }
 
 // ------------------------------------------------------------------------------------------------
-void OFFImporter::GetExtensionList(std::set<std::string>& extensions)
+const aiImporterDesc* OFFImporter::GetInfo () const
 {
-	extensions.insert("off");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -131,9 +144,9 @@ void OFFImporter::InternReadFile( const std::string& pFile,
 		aiVector3D& v = tempPositions[i];
 
 		sz = line; SkipSpaces(&sz);
-		sz = fast_atoreal_move<float>(sz,(float&)v.x); SkipSpaces(&sz);
-		sz = fast_atoreal_move<float>(sz,(float&)v.y); SkipSpaces(&sz);
-		fast_atoreal_move<float>(sz,(float&)v.z);
+		sz = fast_atoreal_move(sz,(float&)v.x); SkipSpaces(&sz);
+		sz = fast_atoreal_move(sz,(float&)v.y); SkipSpaces(&sz);
+		fast_atoreal_move(sz,(float&)v.z);
 	}
 
 	

@@ -69,7 +69,7 @@ public:
 protected:
 
 	// -------------------------------------------------------------------
-	void GetExtensionList(std::set<std::string>& extensions);
+	const aiImporterDesc* GetInfo () const;
 
 	// -------------------------------------------------------------------
 	void SetupProperties(const Importer* pImp);
@@ -79,6 +79,9 @@ protected:
 		IOSystem* pIOHandler);
 
 private:
+
+	bool noSkeletonMesh;
+
 }; // end of class CSMImporter
 } // end of namespace Assimp
 #endif // AI_AC3DIMPORTER_H_INC

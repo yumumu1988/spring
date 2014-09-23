@@ -44,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "AssimpPCH.h"
+#ifndef ASSIMP_BUILD_NO_LWS_IMPORTER
 
 #include "LWSLoader.h"
 #include "ParsingUtils.h"
@@ -56,6 +57,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Importer.h"
 
 using namespace Assimp;
+
+static const aiImporterDesc desc = {
+	"LightWave Scene Importer",
+	"",
+	"",
+	"http://www.newtek.com/lightwave.html=",
+	aiImporterFlags_SupportTextFlavour,
+	0,
+	0,
+	0,
+	0,
+	"lws mot" 
+};
 
 // ------------------------------------------------------------------------------------------------
 // Recursive parsing of LWS files
@@ -110,6 +124,7 @@ void LWS::Element::Parse (const char*& buffer)
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 LWSImporter::LWSImporter()
+: noSkeletonMesh()
 {
 	// nothing to do here
 }
@@ -141,10 +156,9 @@ bool LWSImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler,bool c
 
 // ------------------------------------------------------------------------------------------------
 // Get list of file extensions
-void LWSImporter::GetExtensionList(std::set<std::string>& extensions)
+const aiImporterDesc* LWSImporter::GetInfo () const
 {
-	extensions.insert("lws");
-	extensions.insert("mot");
+	return &desc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -165,6 +179,8 @@ void LWSImporter::SetupProperties(const Importer* pImp)
 	if (last < first) {
 		std::swap(last,first);
 	}
+
+	noSkeletonMesh = pImp->GetPropertyInteger(AI_CONFIG_IMPORT_NO_SKELETON_MESHES,0) != 0;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -189,9 +205,9 @@ void LWSImporter::ReadEnvelope(const LWS::Element& dad, LWO::Envelope& fill )
 
 			float f;
 			SkipSpaces(&c);
-			c = fast_atoreal_move<float>(c,key.value);
+			c = fast_atoreal_move(c,key.value);
 			SkipSpaces(&c);
-			c = fast_atoreal_move<float>(c,f);
+			c = fast_atoreal_move(c,f);
 
 			key.time = f;
 
@@ -224,7 +240,7 @@ void LWSImporter::ReadEnvelope(const LWS::Element& dad, LWO::Envelope& fill )
 			}
 			for (unsigned int i = 0; i < num;++i) {
 				SkipSpaces(&c);
-				c = fast_atoreal_move<float>(c,key.params[i]);
+				c = fast_atoreal_move(c,key.params[i]);
 			}
 		}
 		else if ((*it).tokens[0] == "Behaviors") {
@@ -265,10 +281,10 @@ void LWSImporter::ReadEnvelope_Old(
 
 			// parse value and time, skip the rest for the moment.
 			LWO::Key key;
-			const char* c = fast_atoreal_move<float>((*it).tokens[0].c_str(),key.value);
+			const char* c = fast_atoreal_move((*it).tokens[0].c_str(),key.value);
 			SkipSpaces(&c);
 			float f;
-			fast_atoreal_move<float>((*it).tokens[0].c_str(),f);
+			fast_atoreal_move((*it).tokens[0].c_str(),f);
 			key.time = f;
 
 			envl.keys.push_back(key);
@@ -448,7 +464,7 @@ std::string LWSImporter::FindLWOFile(const std::string& in)
 	std::string tmp;
 	if (in.length() > 3 && in[1] == ':'&& in[2] != '\\' && in[2] != '/')
 	{
-		tmp = in[0] + ":\\" + in.substr(2);
+		tmp = in[0] + (":\\" + in.substr(2));
 	}
 	else tmp = in;
 
@@ -464,11 +480,12 @@ std::string LWSImporter::FindLWOFile(const std::string& in)
 	// <folder>\Scenes\<hh>\<*>.lws
 	// where <hh> is optional.
 
-	std::string test = ".." + io->getOsSeparator() + tmp; 
-	if (io->Exists(test))
+	std::string test = ".." + (io->getOsSeparator() + tmp); 
+	if (io->Exists(test)) {
 		return test;
+	}
 
-	test = ".." + io->getOsSeparator() + test; 
+	test = ".." + (io->getOsSeparator() + test); 
 	if (io->Exists(test)) {
 		return test;
 	}
@@ -738,7 +755,7 @@ void LWSImporter::InternReadFile( const std::string& pFile, aiScene* pScene,
 			if (nodes.empty() || nodes.back().type != LWS::NodeDesc::LIGHT)
 				DefaultLogger::get()->error("LWS: Unexpected keyword: \'LightIntensity\'");
 
-			else fast_atoreal_move<float>(c, nodes.back().lightIntensity );
+			else fast_atoreal_move(c, nodes.back().lightIntensity );
 			
 		}
 		// 'LightType': set type of currently active light
@@ -779,11 +796,11 @@ void LWSImporter::InternReadFile( const std::string& pFile, aiScene* pScene,
 				DefaultLogger::get()->error("LWS: Unexpected keyword: \'LightColor\'");
 
 			else {
-				c = fast_atoreal_move<float>(c, (float&) nodes.back().lightColor.r );
+				c = fast_atoreal_move(c, (float&) nodes.back().lightColor.r );
 				SkipSpaces(&c);
-				c = fast_atoreal_move<float>(c, (float&) nodes.back().lightColor.g );
+				c = fast_atoreal_move(c, (float&) nodes.back().lightColor.g );
 				SkipSpaces(&c);
-				c = fast_atoreal_move<float>(c, (float&) nodes.back().lightColor.b );
+				c = fast_atoreal_move(c, (float&) nodes.back().lightColor.b );
 			}
 		}
 
@@ -792,11 +809,11 @@ void LWSImporter::InternReadFile( const std::string& pFile, aiScene* pScene,
 			if (nodes.empty())
 				DefaultLogger::get()->error("LWS: Unexpected keyword: \'PivotPosition\'");
 			else {
-				c = fast_atoreal_move<float>(c, (float&) nodes.back().pivotPos.x );
+				c = fast_atoreal_move(c, (float&) nodes.back().pivotPos.x );
 				SkipSpaces(&c);
-				c = fast_atoreal_move<float>(c, (float&) nodes.back().pivotPos.y );
+				c = fast_atoreal_move(c, (float&) nodes.back().pivotPos.y );
 				SkipSpaces(&c);
-				c = fast_atoreal_move<float>(c, (float&) nodes.back().pivotPos.z );
+				c = fast_atoreal_move(c, (float&) nodes.back().pivotPos.z );
                 // Mark pivotPos as set
                 nodes.back().isPivotSet = true;
 			}
@@ -896,10 +913,12 @@ void LWSImporter::InternReadFile( const std::string& pFile, aiScene* pScene,
 	if (!pScene->mNumMeshes || !pScene->mNumMaterials) {
 		pScene->mFlags |= AI_SCENE_FLAGS_INCOMPLETE;
 
-		if (pScene->mNumAnimations) {
+		if (pScene->mNumAnimations && !noSkeletonMesh) {
 			// construct skeleton mesh
 			SkeletonMeshBuilder builder(pScene);
 		}
 	}
 
 }
+
+#endif // !! ASSIMP_BUILD_NO_LWS_IMPORTER

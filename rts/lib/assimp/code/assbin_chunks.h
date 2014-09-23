@@ -61,7 +61,7 @@ short	is two bytes wide, stored in little-endian byte order.
 byte	is a single byte.
 string  is an integer n followed by n UTF-8 characters, not terminated by zero
 float	is an IEEE 754 single-precision floating-point value 
-double	is an IEEE 754 double-precision floating-point value 
+float	is an IEEE 754 float-precision floating-point value 
 t[n]    is an array of n elements of type t
 
 -------------------------------------------------------------------------------

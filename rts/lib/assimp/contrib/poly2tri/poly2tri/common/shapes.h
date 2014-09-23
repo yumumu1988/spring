@@ -38,6 +38,7 @@
 #include <stdexcept>
 #include <assert.h>
 #include "lib/streflop/streflop_cond.h"
+#include <string>
 
 namespace p2t {
 
@@ -68,7 +69,7 @@ struct Point {
   }
 
   /// Set this point to some specified coordinates.
-  void set(double x_, double y_)
+  void set(float x_, float y_)
   {
     x = x_;
     y = y_;
@@ -110,9 +111,9 @@ struct Point {
   }
 
   /// Convert this point into a unit point. Returns the Length.
-  double Normalize()
+  float Normalize()
   {
-    double len = Length();
+    float len = Length();
     x /= len;
     y /= len;
     return len;
@@ -137,8 +138,8 @@ struct Edge {
         p = &p2;
       } else if (p1.x == p2.x) {
         // Repeat points
-		  // ASSIMP_CHANGE (aramis_acg)
-		  throw std::runtime_error("repeat points");
+        // ASSIMP_CHANGE (aramis_acg)
+        throw std::runtime_error(std::string("repeat points"));
         //assert(false);
       }
     }
@@ -245,7 +246,7 @@ inline Point operator -(const Point& a, const Point& b)
 }
 
 /// Multiply point by scalar
-inline Point operator *(double s, const Point& a)
+inline Point operator *(float s, const Point& a)
 {
   return Point(s * a.x, s * a.y);
 }
@@ -261,27 +262,27 @@ inline bool operator !=(const Point& a, const Point& b)
 }
 
 /// Peform the dot product on two vectors.
-inline double Dot(const Point& a, const Point& b)
+inline float Dot(const Point& a, const Point& b)
 {
   return a.x * b.x + a.y * b.y;
 }
 
 /// Perform the cross product on two vectors. In 2D this produces a scalar.
-inline double Cross(const Point& a, const Point& b)
+inline float Cross(const Point& a, const Point& b)
 {
   return a.x * b.y - a.y * b.x;
 }
 
 /// Perform the cross product on a point and a scalar. In 2D this produces
 /// a point.
-inline Point Cross(const Point& a, double s)
+inline Point Cross(const Point& a, float s)
 {
   return Point(s * a.y, -s * a.x);
 }
 
 /// Perform the cross product on a scalar and a point. In 2D this produces
 /// a point.
-inline Point Cross(const double s, const Point& a)
+inline Point Cross(const float s, const Point& a)
 {
   return Point(-s * a.y, s * a.x);
 }
