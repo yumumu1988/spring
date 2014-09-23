@@ -13,7 +13,7 @@ foreach(var BUILD_SHARED_LIBS ASSIMP_BUILD_ASSIMP_TOOLS ASSIMP_BUILD_TESTS)
 endforeach()
 
 foreach(var ASSIMP_BUILD_STATIC_LIB ASSIMP_NO_EXPORT)
-	message(STATUS "Forcing assimp option "${var}" to on")
+	message(STATUS "Forcing assimp option ${var} to on")
 	set("${var}" ON CACHE STRING "forced on by spring build env" FORCE)
 endforeach()
 
