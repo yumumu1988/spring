@@ -1,4 +1,5 @@
 # Spring RTS game engine
+# 2016-06-06
 [![Build Status](https://travis-ci.org/spring/spring.svg?branch=develop)](https://travis-ci.org/spring/spring)
 
 ## README
